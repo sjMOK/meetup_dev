@@ -18,3 +18,32 @@ class User(AbstractBaseUser):
 
     class Meta:
         db_table = 'user'
+
+
+class UserType(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=20)
+    possible_duration = models.IntegerField()
+
+    class Meta:
+        db_table = 'user_type'
+
+
+class Reservation(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('User', models.DO_NOTHING)
+    room = models.ForeignKey('rooms.Room', models.DO_NOTHING)
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+
+    class Meta:
+        db_table = 'reservation'
+
+
+class Attendance(models.Model):
+    id = models.AutoField(primary_key=True)
+    reservation = models.ForeignKey('Reservation', models.DO_NOTHING)
+    user = models.ForeignKey('User', models.DO_NOTHING)
+
+    class Meta:
+        db_table = 'attendance'
