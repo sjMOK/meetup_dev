@@ -27,3 +27,15 @@ class UserType(models.Model):
 
     class Meta:
         db_table = 'user_type'
+
+    def is_admin(self):
+        return self.id == 1
+
+    def is_faculty(self):
+        return self.id == 2
+
+    def is_postgraduate(self):
+        return self.id == 3
+
+    def is_undergraduate(self):
+        return self.id == 4
