@@ -3,6 +3,21 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils import timezone
 
 
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **kwargs):
+        user = self.model(
+            email=self.normalize_email(email),
+            **kwargs
+        )
+
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create(self, **kwargs):
+        raise Exception('You cannot call .crete() method. Call create_user() instead.')
+
+
 class User(AbstractBaseUser):
     id = models.AutoField(primary_key=True)
     username = models.CharField(unique=True, max_length=45)
@@ -14,7 +29,7 @@ class User(AbstractBaseUser):
 
     USERNAME_FIELD = 'username'
 
-    # objects = CustomUserManager()
+    objects = UserManager()
 
     class Meta:
         db_table = 'user'

@@ -1,6 +1,49 @@
+from django.utils import timezone
+from django.contrib.auth.hashers import check_password
+
 from rest_framework.test import APITestCase
 
-# Create your tests here.
+from freezegun import freeze_time
+
+from ..models import UserManager, User, UserType
+
+
+FREEZE_TIME = '2022-12-31 23:59:59'
+
+
+class UserMangerTestCase(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        user_type = UserType.objects.create(id=1, name='admin', possible_duration=0)
+        cls.data = {
+            'username': 'username',
+            'name': 'name',
+            'email': 'email@SeJong.ac.kr',
+            'user_type': user_type,
+            'password': 'password',
+        }
+
+        cls.user = User.objects.create_user(**cls.data)
+
+    def test_email_is_normalized(self):
+        normalized_email = UserManager.normalize_email(self.data['email'])
+        self.assertEqual(self.user.email, normalized_email)
+
+    def test_password_is_hashed(self):
+        raw_password = self.data['password']
+        self.assertTrue(check_password(raw_password, self.user.password))
+
+    def test_create_raise_exception(self):
+        self.data['username'] += '_test'
+
+        self.assertRaisesMessage(
+            Exception,
+            'You cannot call .crete() method. Call create_user() instead.',
+            User.objects.create,
+            **self.data
+        )
+
+
 class UserTestCase(APITestCase):
     @classmethod
     @freeze_time(FREEZE_TIME)
