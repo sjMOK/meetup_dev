@@ -34,6 +34,21 @@ class User(AbstractBaseUser):
     class Meta:
         db_table = 'user'
 
+    def is_admin(self):
+        return self.user_type_id == 1
+
+    def is_faculty(self):
+        return self.user_type_id == 2
+
+    def is_postgraduate(self):
+        return self.user_type_id == 3
+
+    def is_undergraduate(self):
+        return self.user_type_id == 4
+
+    def __str__(self):
+        return f'{self.username} {self.name}({self.user_type})'
+
 
 class UserType(models.Model):
     id = models.AutoField(primary_key=True)
@@ -43,14 +58,5 @@ class UserType(models.Model):
     class Meta:
         db_table = 'user_type'
 
-    def is_admin(self):
-        return self.id == 1
-
-    def is_faculty(self):
-        return self.id == 2
-
-    def is_postgraduate(self):
-        return self.id == 3
-
-    def is_undergraduate(self):
-        return self.id == 4
+    def __str__(self):
+        return self.name
