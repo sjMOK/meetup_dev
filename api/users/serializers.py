@@ -31,3 +31,8 @@ class UserSerializer(serializers.ModelSerializer):
             raise APIException('Cannot update password with UserSerializer instance.')
 
         return value
+
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(write_only=True, trim_whitespace=False)
+    password = serializers.CharField(write_only=True, trim_whitespace=False)

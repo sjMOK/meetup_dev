@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import APIException
 
-from ..serializers import UserTypeSerializer, UserSerializer
+from ..serializers import UserTypeSerializer, UserSerializer, LoginSerializer
 from ..models import UserType, User
 
 
@@ -62,3 +62,15 @@ class UserSerializerTestCase(APITestCase):
             serializer.is_valid,
             raise_exception=True
         )
+
+
+class LoginSerializerTestCase(APITestCase):
+    def test_all_fields_are_write_only(self):
+        serializer = LoginSerializer()
+        self.assertTrue(serializer.fields['username'].write_only)
+        self.assertTrue(serializer.fields['password'].write_only)
+
+    def test_trim_white_space_option(self):
+        serializer = LoginSerializer()
+        self.assertFalse(serializer.fields['username'].trim_whitespace)
+        self.assertFalse(serializer.fields['password'].trim_whitespace)
