@@ -4,6 +4,7 @@ from django.contrib.auth.hashers import check_password
 from rest_framework.test import APITestCase
 
 from freezegun import freeze_time
+from faker import Faker
 
 from ..models import UserManager, User, UserType
 
@@ -33,15 +34,12 @@ class UserMangerTestCase(APITestCase):
         raw_password = self.data['password']
         self.assertTrue(check_password(raw_password, self.user.password))
 
-    def test_create_raise_exception(self):
-        self.data['username'] += '_test'
+    def test_create_user(self):
+        fake = Faker()
+        self.data['username'] = fake.random_number(digits=10, fix_len=True)
+        user = User.objects.create_user(**self.data)
 
-        self.assertRaisesMessage(
-            Exception,
-            'You cannot call .crete() method. Call create_user() instead.',
-            User.objects.create,
-            **self.data
-        )
+        self.assertIsInstance(user, User)
 
 
 class UserTestCase(APITestCase):

@@ -15,7 +15,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create(self, **kwargs):
-        raise Exception('You cannot call .crete() method. Call create_user() instead.')
+        return self.create_user(**kwargs)
 
 
 class User(AbstractBaseUser):
