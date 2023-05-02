@@ -1,8 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import APIException
 
+from .factories import UserFactory, UserTypeFactory
 from ..serializers import UserTypeSerializer, UserSerializer, LoginSerializer
-from ..models import UserType, User
+from ..models import UserType
 
 
 class UserTypeSerializerTestCase(APITestCase):
@@ -27,9 +28,8 @@ class UserTypeSerializerTestCase(APITestCase):
 class UserSerializerTestCase(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        user_type = UserType.objects.create(name='admin', possible_duration=0)
-        cls.user = User.objects.create_user(username='username', password='password', name='name',
-                                        email='email@sejong.ac.kr', user_type=user_type)
+        user_type = UserTypeFactory()
+        cls.user = UserFactory(user_type=user_type)
 
     def test_password_is_write_only(self):
         serializer = UserSerializer()

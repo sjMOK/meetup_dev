@@ -5,18 +5,21 @@ from django.contrib.sessions.backends.db import SessionStore
 from rest_framework.test import APITestCase
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
-from ..models import User, UserType
+from .factories import UserFactory, TEST_PASSWORD, UserTypeFactory
+from ..models import User
 from ..serializers import UserSerializer
 
 
 class LoginViewTestCase(APITestCase):
+    url = '/users/login'
+
     @classmethod
     def setUpTestData(cls):
-        user_type = UserType.objects.create(name='admin', possible_duration=0)
-        cls.user = User.objects.create_user(username='username', name='name', email='email@naver.com', password='password', user_type=user_type)
+        user_type = UserTypeFactory()
+        cls.user = UserFactory(user_type=user_type)
 
     def test_success(self):
-        response = self.client.post('/users/login', {'username': 'username', 'password': 'password'}, format='json')
+        response = self.client.post(self.url, {'username': self.user.username, 'password': TEST_PASSWORD}, format='json')
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -25,28 +28,30 @@ class LoginViewTestCase(APITestCase):
         self.assertIn('csrftoken', response.cookies)
 
     def test_fail_with_wrong_credentials(self):
-        response = self.client.post('/users/login', {'username': 'username', 'password': 'wrong_password'}, format='json')
+        response = self.client.post(self.url, {'username': 'username', 'password': 'wrong_password'}, format='json')
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
         self.assertEqual(body_data, {'detail': 'No matching user.'})
 
     def test_validation_fail(self):
-        response = self.client.post('/users/login', {'username': 'username'}, format='json')
+        response = self.client.post(self.url, {'username': 'username'}, format='json')
         self.assertContains(response, 'password', status_code=HTTP_400_BAD_REQUEST)
 
 
 class LogoutViewTestCase(APITestCase):
+    url = '/users/logout'
+
     def test(self):
-        user_type = UserType.objects.create(name='admin', possible_duration=0)
-        User.objects.create_user(username='username', name='name', email='email@naver.com', password='password', user_type=user_type)
+        user_type = UserTypeFactory()
+        user = UserFactory(user_type=user_type)
         s = SessionStore()
         
-        login_response = self.client.post('/users/login', {'username': 'username', 'password': 'password'}, format='json')
+        login_response = self.client.post('/users/login', {'username': user.username, 'password': TEST_PASSWORD}, format='json')
         session_id = login_response.cookies['sessionid'].value
         self.assertTrue(s.exists(session_id))
         
-        self.client.post('/users/logout')
+        self.client.post(self.url)
         self.assertFalse(s.exists(session_id))
 
 
@@ -55,11 +60,12 @@ class UserViewSetTestCase(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        admin_user_type = UserType.objects.create(id=1, name='admin', possible_duration=0)
-        cls.user_type = UserType.objects.create(name='undergraduate', possible_duration=1)
+        admin_user_type = UserTypeFactory.create_admin_user_type()
+        cls.user_type = UserTypeFactory()
 
-        cls.admin_user = User.objects.create_user(username='admin', name='admin', email='admin@naver.com', password='password', user_type=admin_user_type)
-        cls.user = User.objects.create_user(username='user', name='user', email='user@naver.com', password='password', user_type=cls.user_type)
+        cls.admin_user = UserFactory(user_type=admin_user_type)
+        cls.user = UserFactory(user_type=cls.user_type)
+        cls.dummy_user = UserFactory(user_type=cls.user_type)
 
     def test_get_by_admin_user(self):
         self.url += f'/{self.user.id}'
@@ -72,7 +78,7 @@ class UserViewSetTestCase(APITestCase):
         self.assertDictEqual(body_data, UserSerializer(self.user).data)
 
     def test_get_by_normal_user(self):
-        self.url += f'/{self.user.id + 1}'
+        self.url += f'/{self.dummy_user.id}'
 
         self.client.force_authenticate(self.user)
         response = self.client.get(self.url)
@@ -150,7 +156,7 @@ class UserViewSetTestCase(APITestCase):
         self.assertEqual(user.email, reqeust_data['email'])
 
     def test_partial_update_by_normal_user(self):
-        self.url += f'/{self.user.id + 1}'
+        self.url += f'/{self.dummy_user.id}'
         reqeust_data = {'name': 'newname', 'email': 'new@naver.com'}
 
         self.client.force_authenticate(user=self.user)
@@ -200,7 +206,7 @@ class UserViewSetTestCase(APITestCase):
         self.assertFalse(User.objects.filter(id=self.user.id).exists())
 
     def test_delete_by_normal_user(self):
-        self.url += f'/{self.user.id + 1}'
+        self.url += f'/{self.dummy_user.id}'
 
         self.client.force_authenticate(user=self.user)
         response = self.client.delete(self.url)
