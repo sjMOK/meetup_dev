@@ -1,14 +1,14 @@
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, authentication_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.exceptions import NotFound
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 
 from .models import User
-from .serializers import LoginSerializer, UserSerializer
-from .permissions import UserAccessPermission
+from .serializers import LoginSerializer, UserSerializer, PasswordChangeSerializer
+from .permissions import IsAuthenticatedNonAdminUser, UserAccessPermission
 
 
 @api_view(['POST'])
@@ -34,8 +34,23 @@ def logout_view(request):
     return Response('Logout success.')
 
 
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticatedNonAdminUser])
+def change_password(request):
+    serializer = PasswordChangeSerializer(request.user, data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    new_password = serializer.validated_data['new_password']
+    request.user.set_password(new_password)
+    request.user.save()
+    update_session_auth_hash(request, request.user)
+
+    return Response()
+
+
 class UserViewSet(GenericViewSet):
     __normal_user_patchable_fields = ('name', 'email')
+    lookup_value_regex = r'[0-9]+'
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [UserAccessPermission]

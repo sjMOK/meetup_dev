@@ -55,6 +55,43 @@ class LogoutViewTestCase(APITestCase):
         self.assertFalse(s.exists(session_id))
 
 
+class ChangePasswordTestCase(APITestCase):
+    url = '/users/password'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_raw_password = 'raw_password'
+        cls.user = UserFactory(password=cls.user_raw_password)
+
+    def test_success(self):
+        request_data = {
+            'current_password': self.user_raw_password,
+            'new_password': 'new_password',
+        }
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(self.url, request_data, format='json')
+        user = User.objects.get(id=self.user.id)
+
+        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertTrue(user.check_password(request_data['new_password']))
+
+    def test_admin_user_permission_denied(self):
+        admin_type = UserTypeFactory.create_admin_user_type()
+        admin_user = UserFactory(user_type=admin_type)
+
+        self.client.force_authenticate(user=admin_user)
+        response = self.client.patch(self.url)
+
+        self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
+
+    def test_anonymous_user_permission_denied(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.patch(self.url)
+
+        self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
+
+
 class UserViewSetTestCase(APITestCase):
     url = '/users'
 
