@@ -35,13 +35,10 @@ class UserSerializerTestCase(APITestCase):
         serializer = UserSerializer()
         self.assertTrue(serializer.fields['password'].write_only)
 
-    def test_password_required_false(self):
-        serializer = UserSerializer()
-        self.assertFalse(serializer.fields['password'].required)
-
     def test_serialization(self):
         serializer = UserSerializer(self.user)
         expected_data = {
+            'id': self.user.id,
             'username': self.user.username,
             'name': self.user.name, 
             'email': self.user.email,

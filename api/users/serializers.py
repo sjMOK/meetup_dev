@@ -13,11 +13,9 @@ class UserTypeSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'password', 'name', 'email', 'user_type']
+        fields = ['id', 'username', 'password', 'name', 'email', 'user_type']
         extra_kwargs = {
-            'password': {
-                'write_only': True, 'required': False,
-            },
+            'password': {'write_only': True},
         }
 
     def to_representation(self, instance):
