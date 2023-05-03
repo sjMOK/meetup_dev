@@ -36,3 +36,21 @@ class UserSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(write_only=True, trim_whitespace=False)
     password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(min_length=8, max_length=128)
+    new_password = serializers.CharField(min_length=8, max_length=128)
+
+    def validate_current_password(self, value):
+        if not self.instance.check_password(value):
+            raise serializers.ValidationError('The current password not matched.')
+
+        return value
+
+    def validate(self, attrs):
+        current_password, new_password = attrs['current_password'], attrs['new_password']
+        if current_password == new_password:
+            raise serializers.ValidationError('The new password is same as the current password.')
+
+        return attrs

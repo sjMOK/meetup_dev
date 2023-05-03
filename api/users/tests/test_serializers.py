@@ -1,8 +1,8 @@
 from rest_framework.test import APITestCase
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, ValidationError
 
 from .factories import UserFactory, UserTypeFactory
-from ..serializers import UserTypeSerializer, UserSerializer, LoginSerializer
+from ..serializers import UserTypeSerializer, UserSerializer, LoginSerializer, PasswordChangeSerializer
 from ..models import UserType
 
 
@@ -74,3 +74,58 @@ class LoginSerializerTestCase(APITestCase):
         serializer = LoginSerializer()
         self.assertFalse(serializer.fields['username'].trim_whitespace)
         self.assertFalse(serializer.fields['password'].trim_whitespace)
+
+
+class PasswordChangeSerializerTestCase(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.raw_password = 'raw_password'
+        cls.user = UserFactory(password=cls.raw_password)
+
+    def test_current_password_and_new_password_are_same(self):
+        data = {
+            'current_password': self.raw_password,
+            'new_password': self.raw_password,
+        }
+        serializer = PasswordChangeSerializer(self.user, data=data)
+
+        self.assertRaisesMessage(
+            ValidationError,
+            'The new password is same as the current password.',
+            serializer.is_valid,
+            raise_exception=True
+        )
+
+    def test_current_password_and_new_password_are_different(self):
+        data = {
+            'current_password': self.raw_password,
+            'new_password': 'new_password',
+        }
+        serializer = PasswordChangeSerializer(self.user, data=data)
+
+        self.assertTrue(serializer.is_valid())
+        self.assertDictEqual(serializer.validated_data, data)
+
+    def test_current_password_not_match(self):
+        data = {
+            'current_password': '_' + self.raw_password,
+            'new_password': 'new_password',
+        }
+        serializer = PasswordChangeSerializer(self.user, data=data)
+
+        self.assertRaisesMessage(
+            ValidationError,
+            'The current password not matched.',
+            serializer.is_valid,
+            raise_exception=True
+        )
+
+    def test_current_password_match(self):
+        data = {
+            'current_password': self.raw_password,
+            'new_password': 'new_password',
+        }
+        serializer = PasswordChangeSerializer(self.user, data=data)
+
+        self.assertTrue(serializer.is_valid())
+        self.assertDictEqual(serializer.validated_data, data)
