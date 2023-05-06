@@ -51,7 +51,7 @@ def change_password(request):
 class UserViewSet(GenericViewSet):
     __normal_user_patchable_fields = ('name', 'email')
     lookup_value_regex = r'[0-9]+'
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('user_type', 'username')
     serializer_class = UserSerializer
     permission_classes = [UserAccessPermission]
 
@@ -71,8 +71,11 @@ class UserViewSet(GenericViewSet):
         return Response(serializer.data)
     
     def list(self, request):
-        users = self.get_queryset()
-        serializer = self.get_serializer(users, many=True)
+        queryset = self.get_queryset()
+        if 'username' in request.query_params:
+            queryset = queryset.filter(username=request.query_params['username'])
+
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
     def create(self, request):
@@ -81,7 +84,7 @@ class UserViewSet(GenericViewSet):
         user = serializer.save()
         return Response(status=HTTP_201_CREATED, headers={'Location': user.id})
     
-    def partial_update(self, request, pk):        
+    def partial_update(self, request, pk):
         if self.__validate_data_contains_non_patchable_fields():
             return Response('The data contains fields cannot be updated.', status=HTTP_400_BAD_REQUEST)
         user = self.__get_user()

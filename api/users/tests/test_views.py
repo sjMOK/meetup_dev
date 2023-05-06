@@ -91,7 +91,7 @@ class ChangePasswordTestCase(APITestCase):
 
         self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
 
-
+from django.test import tag
 class UserViewSetTestCase(APITestCase):
     url = '/users'
 
@@ -151,6 +151,17 @@ class UserViewSetTestCase(APITestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
+
+    def test_list_search_by_username(self):
+        username = self.user.username
+        query_params = {'username': username}
+
+        self.client.force_authenticate(self.admin_user)
+        response = self.client.get(self.url, query_params)
+        body_data = json.loads(response.content)
+
+        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertListEqual(body_data, UserSerializer(User.objects.filter(username=username), many=True).data)
 
     def test_create(self):
         request_data = {

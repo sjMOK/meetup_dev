@@ -21,7 +21,7 @@ class UserFactory(DjangoModelFactory):
     class Meta:
         model = 'users.User'
 
-    username = sequence(lambda n: f'170111{n}')
+    username = sequence(lambda n: f'1701111{n}')
     password = TEST_PASSWORD
     name = Faker('name', locale='ko_KR')
     email = Faker('email')
