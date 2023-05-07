@@ -35,7 +35,7 @@ class RoomView(viewsets.ModelViewSet):
         return Response({"message": "invalid form"})
 
 
-class RoomRetrieveView(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+class RoomDetailView(viewsets.ModelViewSet):
+    # permission_classes = [IsAuthenticated]
     queryset = Room.objects.all()
     serializer_class = RoomSerializer

@@ -26,7 +26,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # DEBUG = True
 DEBUG = os.environ.get("DEBUG") == "True"
 
-ALLOWED_HOSTS = ["3.35.38.25"]
+ALLOWED_HOSTS = ["3.35.38.25", "*"]
 
 APPEND_SLASH = False
 
