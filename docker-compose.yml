@@ -1,8 +1,23 @@
 version: '3'
 
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_ROOT_USER=root
+    env_file:
+      - "./.env"
+    volumes:
+      - ./mysql:/var/lib/mysql/
+
   api:
     container_name: api
+    restart: always
     build:
       context: ./api
       dockerfile: ./Dockerfile
@@ -16,6 +31,8 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     env_file:
       - "./.env"
+    depends_on:
+      - mysql
 
   nginx:
     image: nginx
@@ -27,4 +44,3 @@ services:
 
     depends_on:
       - api
-

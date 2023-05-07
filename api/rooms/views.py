@@ -1,3 +1,41 @@
-from django.shortcuts import render
+import json
+from rest_framework import viewsets
+from rest_framework.response import Response
+from .models import Room, RoomImages
+from .serializers import RoomSerializer
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
+import logging
 
-# Create your views here.
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+
+class RoomView(viewsets.ModelViewSet):
+    # permission_classes = [IsAuthenticated]
+    queryset = Room.objects.all()
+    serializer_class = RoomSerializer
+
+    def list(self, request):
+        queryset = Room.objects.all()
+        serializer = RoomSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = RoomSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                serializer.save()
+                return Response({"message": "complete"})
+            except:
+                return Response({"message": "fail"})
+        return Response({"message": "invalid form"})
+
+
+class RoomRetrieveView(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = Room.objects.all()
+    serializer_class = RoomSerializer
