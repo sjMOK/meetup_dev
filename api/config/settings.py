@@ -26,7 +26,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # DEBUG = True
 DEBUG = os.environ.get('DEBUG')=='True'
 
-ALLOWED_HOSTS = ['3.35.38.254']
+ALLOWED_HOSTS = ['3.35.38.254', 'localhost', '127.0.0.1']
 
 APPEND_SLASH = False
 
@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'drf_yasg',
+    'django_filters',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -53,7 +55,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 ROOT_URLCONF = 'config.urls'
 
@@ -134,3 +139,9 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 60
+}
