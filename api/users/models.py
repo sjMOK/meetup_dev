@@ -57,6 +57,7 @@ class UserType(models.Model):
 
     class Meta:
         db_table = 'user_type'
+        ordering = ['id']
 
     def __str__(self):
         return self.name

@@ -6,8 +6,8 @@ from rest_framework.test import APITestCase
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
 from .factories import UserFactory, TEST_PASSWORD, UserTypeFactory
-from ..models import User
-from ..serializers import UserSerializer
+from ..models import User, UserType
+from ..serializers import UserSerializer, UserTypeSerializer
 
 
 class LoginViewTestCase(APITestCase):
@@ -23,7 +23,7 @@ class LoginViewTestCase(APITestCase):
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_200_OK)
-        self.assertEqual(body_data, str(self.user))
+        self.assertEqual(body_data, UserSerializer(self.user).data)
         self.assertIn('sessionid', response.cookies)
         self.assertIn('csrftoken', response.cookies)
 
@@ -53,6 +53,17 @@ class LogoutViewTestCase(APITestCase):
         
         self.client.post(self.url)
         self.assertFalse(s.exists(session_id))
+
+
+class GetAllUserTypeTestCase(APITestCase):
+    url = '/users/types'
+
+    def test_success(self):
+        UserTypeFactory.create_batch(5)
+        response = self.client.get(self.url)
+        body_data = json.loads(response.content)
+
+        self.assertListEqual(body_data, UserTypeSerializer(UserType.objects.all(), many=True).data)
 
 
 class ChangePasswordTestCase(APITestCase):
@@ -91,7 +102,7 @@ class ChangePasswordTestCase(APITestCase):
 
         self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
 
-from django.test import tag
+
 class UserViewSetTestCase(APITestCase):
     url = '/users'
 
