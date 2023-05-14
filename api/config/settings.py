@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rooms',
     'users',
     'rest_framework',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
