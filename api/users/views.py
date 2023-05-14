@@ -31,7 +31,16 @@ def login_view(request):
 @authentication_classes([])
 def logout_view(request):
     logout(request)
-    return Response('Logout success.')
+    return Response()
+
+
+@swagger_auto_schema(method='GET', security=[], responses={200: UserTypeSerializer(many=True)}, operation_description='모든 user type 데이터 조회')
+@api_view(['GET'])
+@authentication_classes([])
+def get_all_user_type(request):
+    queryset = UserType.objects.all()
+    serializer = UserTypeSerializer(queryset, many=True)
+    return Response(serializer.data)
 
 
 @api_view(['PATCH'])
