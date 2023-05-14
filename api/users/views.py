@@ -24,7 +24,7 @@ def login_view(request):
         raise NotFound('No matching user.')
 
     login(request, user)
-    return Response(str(request.user))
+    return Response(UserSerializer(user).data)
 
 
 @api_view(['POST'])

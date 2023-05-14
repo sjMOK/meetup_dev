@@ -23,7 +23,7 @@ class LoginViewTestCase(APITestCase):
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_200_OK)
-        self.assertEqual(body_data, str(self.user))
+        self.assertEqual(body_data, UserSerializer(self.user).data)
         self.assertIn('sessionid', response.cookies)
         self.assertIn('csrftoken', response.cookies)
 
