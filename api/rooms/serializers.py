@@ -48,7 +48,6 @@ class RoomSerializer(serializers.ModelSerializer):
 
 class ReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    status = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Reservation
