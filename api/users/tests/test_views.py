@@ -3,7 +3,7 @@ import json
 from django.contrib.sessions.backends.db import SessionStore
 
 from rest_framework.test import APITestCase
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
 from .factories import UserFactory, TEST_PASSWORD, UserTypeFactory
 from ..models import User, UserType
@@ -143,13 +143,19 @@ class UserViewSetTestCase(APITestCase):
 
         self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
 
+    def __test_pagination(self, body_data):
+        self.assertTrue('count' in body_data)
+        self.assertTrue('next' in body_data)
+        self.assertTrue('previous' in body_data)
+
     def test_list_by_admin_user(self):
         self.client.force_authenticate(self.admin_user)
         response = self.client.get(self.url)
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_200_OK)
-        self.assertListEqual(body_data, UserSerializer(User.objects.all(), many=True).data)
+        self.__test_pagination(body_data)
+        self.assertListEqual(body_data['results'], UserSerializer(User.objects.all(), many=True).data)
 
     def test_list_by_normal_user(self):
         self.client.force_authenticate(user=self.user)
@@ -172,7 +178,8 @@ class UserViewSetTestCase(APITestCase):
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_200_OK)
-        self.assertListEqual(body_data, UserSerializer(User.objects.filter(username=username), many=True).data)
+        self.__test_pagination(body_data)
+        self.assertListEqual(body_data['results'], UserSerializer(User.objects.filter(username=username), many=True).data)
 
     def test_create(self):
         request_data = {
@@ -185,10 +192,11 @@ class UserViewSetTestCase(APITestCase):
         
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.post(self.url, request_data, format='json')
-        created_user_id = response.get('Location')
+        body_data = json.loads(response.content)
+        created_user = User.objects.get(id=body_data['id'])
 
         self.assertEqual(response.status_code, HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(id=created_user_id).exists())
+        self.assertDictEqual(body_data, UserSerializer(created_user).data)
 
     def test_create_by_normal_user(self):
         self.client.force_authenticate(user=self.user)
@@ -261,7 +269,7 @@ class UserViewSetTestCase(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.delete(self.url)
 
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, HTTP_204_NO_CONTENT)
         self.assertFalse(User.objects.filter(id=self.user.id).exists())
 
     def test_delete_by_normal_user(self):
@@ -270,7 +278,7 @@ class UserViewSetTestCase(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.delete(self.url)
 
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, HTTP_204_NO_CONTENT)
         self.assertFalse(User.objects.filter(id=self.user.id).exists())
 
     def test_delete_by_anonymous_user(self):

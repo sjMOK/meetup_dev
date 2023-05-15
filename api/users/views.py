@@ -3,9 +3,11 @@ from django.contrib.auth import login, authenticate, logout, update_session_auth
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.exceptions import NotFound
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 
 from .models import User, UserType
@@ -18,9 +20,8 @@ from .documentations import (
 )
 
 
-
 @swagger_auto_schema(method='POST', security=[], request_body=LoginSerializer, 
-                     responses={200: UserResponse, 400: 'message: No matching user.\nbody의 username, password 틀렸을 때\n'}, 
+                     responses={200: UserResponse, 404: 'message: No matching user.\nbody의 username, password 틀렸을 때\n'}, 
                      operation_description=login_view_operation_description)
 @api_view(['POST'])
 def login_view(request):
@@ -70,16 +71,18 @@ def change_password(request):
     return Response()
 
 
-class UserViewSet(GenericViewSet):
+class UserViewSet(ModelViewSet):
     __normal_user_patchable_fields = ('name', 'email')
     lookup_value_regex = r'[0-9]+'
     queryset = User.objects.all().order_by('user_type', 'username')
     serializer_class = UserSerializer
     permission_classes = [UserAccessPermission]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['username']
 
-    def __get_user(self):
+    def get_object(self):
         if self.request.user.is_admin():
-            return self.get_object()
+            return super().get_object()
         return self.request.user
 
     def __validate_data_contains_non_patchable_fields(self):
@@ -88,41 +91,26 @@ class UserViewSet(GenericViewSet):
         return False
 
     @swagger_auto_schema(responses={200: UserResponse, 404: not_found_response}, operation_description='id에 해당하는 유저 정보 조회')
-    def retrieve(self, request, pk):
-        user = self.__get_user()
-        serializer = self.get_serializer(user)
-        return Response(serializer.data)
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
     
-    @swagger_auto_schema(responses={200: UserListResponse}, operation_description='모든 user 정보 조회')
-    def list(self, request):
-        queryset = self.get_queryset()
-        if 'username' in request.query_params:
-            queryset = queryset.filter(username=request.query_params['username'])
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    @swagger_auto_schema(responses={200: UserListResponse(many=True)}, operation_description='모든 user 정보 조회')
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
     
     @swagger_auto_schema(request_body=UserSerializer, responses={201: '', 400: '데이터 형식 확인'}, operation_description=user_create_operation_description)
-    def create(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response(status=HTTP_201_CREATED, headers={'Location': user.id})
-    
-    @swagger_auto_schema(request_body=UserSerializer, responses={201: '', 400: '데이터 형식 확인', 404: not_found_response},
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(request_body=UserSerializer, responses={200: '', 400: '데이터 형식 확인', 404: not_found_response},
                          operation_description=user_partial_update_operation_description)
-    def partial_update(self, request, pk):
+    def partial_update(self, request, *args, **kwargs):
         if self.__validate_data_contains_non_patchable_fields():
             return Response('The data contains fields cannot be updated.', status=HTTP_400_BAD_REQUEST)
-        user = self.__get_user()
 
-        serializer = self.get_serializer(user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response()
+        return super().partial_update(request, *args, **kwargs)
     
-    @swagger_auto_schema(responses={200: '', 404: not_found_response}, operation_description='id에 해당하는 유저 삭제')
-    def destroy(self, request, pk):
-        user = self.__get_user()
-        user.delete()
-        return Response()
+    @swagger_auto_schema(responses={204: '', 404: not_found_response}, operation_description='id에 해당하는 유저 삭제')
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
