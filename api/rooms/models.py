@@ -1,6 +1,7 @@
 from django.db import models
 from users.models import User
 from django.utils.translation import gettext_lazy as _
+import datetime
 
 
 class RoomImages(models.Model):
@@ -22,9 +23,9 @@ class Reservation(models.Model):
         (1, "is blocked"),
     )
     id = models.AutoField(primary_key=True)
-    date = models.DateField()
-    start = models.DateTimeField()
-    end = models.DateTimeField()
+    date = models.DateField(default=datetime.date.today)
+    start = models.DateTimeField(default=datetime.datetime.now)
+    end = models.DateTimeField(default=datetime.datetime.now)
     reason = models.CharField(max_length=63, null=True, blank=True)
     status = models.IntegerField(choices=STATUS_CHOICE, default=0)
     booker = models.ForeignKey(
