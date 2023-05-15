@@ -93,7 +93,7 @@ class UserViewSet(GenericViewSet):
         serializer = self.get_serializer(user)
         return Response(serializer.data)
     
-    @swagger_auto_schema(responses={200: UserResponse(many=True)}, operation_description='모든 user 정보 조회')
+    @swagger_auto_schema(responses={200: UserListResponse}, operation_description='모든 user 정보 조회')
     def list(self, request):
         queryset = self.get_queryset()
         if 'username' in request.query_params:
