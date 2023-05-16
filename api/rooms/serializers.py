@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DailyReservationCard, Reservation, Room, RoomImages
+from .models import Reservation, Room, RoomImages
 from django.contrib.auth.models import User
 import logging, json
 from PIL import Image
@@ -48,14 +48,7 @@ class RoomSerializer(serializers.ModelSerializer):
 
 class ReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    status = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Reservation
-        fields = "__all__"
-
-
-class DailyReservationCardSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DailyReservationCard
         fields = "__all__"
