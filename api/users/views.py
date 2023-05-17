@@ -21,16 +21,16 @@ from .documentations import (
 
 
 @swagger_auto_schema(method='POST', security=[], request_body=LoginSerializer, 
-                     responses={200: UserResponse, 404: 'message: No matching user.\nbody의 username, password 틀렸을 때\n'}, 
+                     responses={200: UserResponse, 404: 'message: No matching user.\nbody의 user_no, password 틀렸을 때\n'}, 
                      operation_description=login_view_operation_description)
 @api_view(['POST'])
 def login_view(request):
     serializer = LoginSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    username = serializer.validated_data['username']
+    user_no = serializer.validated_data['user_no']
     password = serializer.validated_data['password']
-    user = authenticate(username=username, password=password)
+    user = authenticate(user_no=user_no, password=password)
 
     if user is None:
         raise NotFound('No matching user.')
@@ -74,11 +74,11 @@ def change_password(request):
 class UserViewSet(ModelViewSet):
     __normal_user_patchable_fields = ('name', 'email')
     lookup_value_regex = r'[0-9]+'
-    queryset = User.objects.all().order_by('user_type', 'username')
+    queryset = User.objects.all().order_by('user_type', 'user_no')
     serializer_class = UserSerializer
     permission_classes = [UserAccessPermission]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['username']
+    filterset_fields = ['user_no']
 
     def get_object(self):
         if self.request.user.is_admin():

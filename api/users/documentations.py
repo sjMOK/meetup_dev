@@ -14,9 +14,9 @@ sessionid에 대응되는 세션 데이터 서버에서 삭제 후 쿠키 삭제
 
 
 login_view_operation_description = '''
-body data의 username과 password에 일치하는 유저 로그인
+body data의 user_no와 password에 일치하는 유저 로그인
 유저의 세션 데이터 생성 후 해당 세션의 id를 쿠키에 담아서 response 반환 - 헤더의 Set-Cookie sessionid 확인
-username과 password에 일치하는 유저 없을 시 400 에러(No matching user.)
+user_no와 password에 일치하는 유저 없을 시 400 에러(No matching user.)
 쿠키에 이미 발급 받은 세션 담아서 보낼 경우 해당 세션의 만료 기한 연장 후 반환
 '''
 
@@ -34,12 +34,12 @@ user_partial_update_operation_description = '''
 user 데이터 변경 요청
 변경할 필드만 body에 담으면 됨
 body의 필드가 잘못된 형식일 경우 해당 필드 이름이 key, 이유가 value인 메세지와 함께 400 반환
-일반 유저의 경우 name(이름), email(이메일)만 변경 가능, admin 유저의 경우 username(학번/교번), user_type(타입)도 변경 가능
+일반 유저의 경우 name(이름), email(이메일)만 변경 가능, admin 유저의 경우 user_no(학번/교번), user_type(타입)도 변경 가능
 '''
 
 class UserResponse(serializers.Serializer):
     id = serializers.IntegerField()
-    username = serializers.CharField()
+    user_no = serializers.CharField()
     name = serializers.CharField()
     email = serializers.CharField()
     user_type = UserTypeSerializer()

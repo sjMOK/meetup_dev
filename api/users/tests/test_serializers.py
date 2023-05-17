@@ -39,7 +39,7 @@ class UserSerializerTestCase(APITestCase):
         serializer = UserSerializer(self.user)
         expected_data = {
             'id': self.user.id,
-            'username': self.user.username,
+            'user_no': self.user.user_no,
             'name': self.user.name, 
             'email': self.user.email,
             'user_type': UserTypeSerializer(self.user.user_type).data,
@@ -64,12 +64,12 @@ class UserSerializerTestCase(APITestCase):
 class LoginSerializerTestCase(APITestCase):
     def test_all_fields_are_write_only(self):
         serializer = LoginSerializer()
-        self.assertTrue(serializer.fields['username'].write_only)
+        self.assertTrue(serializer.fields['user_no'].write_only)
         self.assertTrue(serializer.fields['password'].write_only)
 
     def test_trim_white_space_option(self):
         serializer = LoginSerializer()
-        self.assertFalse(serializer.fields['username'].trim_whitespace)
+        self.assertFalse(serializer.fields['user_no'].trim_whitespace)
         self.assertFalse(serializer.fields['password'].trim_whitespace)
 
 

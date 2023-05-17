@@ -19,7 +19,7 @@ class LoginViewTestCase(APITestCase):
         cls.user = UserFactory(user_type=user_type)
 
     def test_success(self):
-        response = self.client.post(self.url, {'username': self.user.username, 'password': TEST_PASSWORD}, format='json')
+        response = self.client.post(self.url, {'user_no': self.user.user_no, 'password': TEST_PASSWORD}, format='json')
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -28,14 +28,14 @@ class LoginViewTestCase(APITestCase):
         self.assertIn('csrftoken', response.cookies)
 
     def test_fail_with_wrong_credentials(self):
-        response = self.client.post(self.url, {'username': 'username', 'password': 'wrong_password'}, format='json')
+        response = self.client.post(self.url, {'user_no': 'user_no', 'password': 'wrong_password'}, format='json')
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
         self.assertEqual(body_data, {'detail': 'No matching user.'})
 
     def test_validation_fail(self):
-        response = self.client.post(self.url, {'username': 'username'}, format='json')
+        response = self.client.post(self.url, {'user_no': 'user_no'}, format='json')
         self.assertContains(response, 'password', status_code=HTTP_400_BAD_REQUEST)
 
 
@@ -47,7 +47,7 @@ class LogoutViewTestCase(APITestCase):
         user = UserFactory(user_type=user_type)
         s = SessionStore()
         
-        login_response = self.client.post('/users/login', {'username': user.username, 'password': TEST_PASSWORD}, format='json')
+        login_response = self.client.post('/users/login', {'user_no': user.user_no, 'password': TEST_PASSWORD}, format='json')
         session_id = login_response.cookies['sessionid'].value
         self.assertTrue(s.exists(session_id))
         
@@ -169,9 +169,9 @@ class UserViewSetTestCase(APITestCase):
 
         self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
 
-    def test_list_search_by_username(self):
-        username = self.user.username
-        query_params = {'username': username}
+    def test_list_search_by_user_no(self):
+        user_no = self.user.user_no
+        query_params = {'user_no': user_no}
 
         self.client.force_authenticate(self.admin_user)
         response = self.client.get(self.url, query_params)
@@ -179,11 +179,11 @@ class UserViewSetTestCase(APITestCase):
 
         self.assertEqual(response.status_code, HTTP_200_OK)
         self.__test_pagination(body_data)
-        self.assertListEqual(body_data['results'], UserSerializer(User.objects.filter(username=username), many=True).data)
+        self.assertListEqual(body_data['results'], UserSerializer(User.objects.filter(user_no=user_no), many=True).data)
 
     def test_create(self):
         request_data = {
-            'username': 'newusername',
+            'user_no': 'new_user_no',
             'password': 'password',
             'name': 'newname',
             'email': 'new@naver.com',
@@ -236,7 +236,7 @@ class UserViewSetTestCase(APITestCase):
 
     def test_normal_user_try_to_update_non_patchable_field(self):
         self.url += f'/{self.user.id}'
-        reqeust_data = {'username': 'newusername', 'name': 'newname', 'email': 'new@naver.com'}
+        reqeust_data = {'user_no': 'new_user_no', 'name': 'newname', 'email': 'new@naver.com'}
 
         self.client.force_authenticate(user=self.user)
         response = self.client.patch(self.url, reqeust_data, format='json')
@@ -247,7 +247,7 @@ class UserViewSetTestCase(APITestCase):
 
     def test_admin_user_try_to_update_non_patchable_field(self):
         self.url += f'/{self.user.id}'
-        reqeust_data = {'username': 'newusername', 'name': 'newname', 'email': 'new@naver.com'}
+        reqeust_data = {'user_no': 'new_user_no', 'name': 'newname', 'email': 'new@naver.com'}
 
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.patch(self.url, reqeust_data, format='json')

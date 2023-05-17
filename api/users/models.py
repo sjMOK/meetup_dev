@@ -20,14 +20,14 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser):
     id = models.AutoField(primary_key=True)
-    username = models.CharField(unique=True, max_length=45)
+    user_no = models.CharField(unique=True, max_length=45)
     name = models.CharField(max_length=45)
     email = models.EmailField()
     user_type = models.ForeignKey('UserType', models.DO_NOTHING)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
 
-    USERNAME_FIELD = 'username'
+    USERNAME_FIELD = 'user_no'
 
     objects = UserManager()
 
@@ -47,7 +47,7 @@ class User(AbstractBaseUser):
         return self.user_type_id == 4
 
     def __str__(self):
-        return f'{self.username} {self.name}({self.user_type})'
+        return f'{self.user_no} {self.name}({self.user_type})'
 
 
 class UserType(models.Model):
