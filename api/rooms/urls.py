@@ -1,9 +1,7 @@
 from django.urls import path
 from .views import (
-    ReservationRetrievView,
     ReservationView,
     RoomView,
-    DailyReservationCardView,
 )
 
 urlpatterns = [
@@ -20,23 +18,12 @@ urlpatterns = [
         ),
     ),
     path(
-        "/daily-reservation-card",
-        DailyReservationCardView.as_view({"get": "list", "post": "create"}),
-    ),
-    path(
-        "/daily-reservation-card/<int:pk>",
-        DailyReservationCardView.as_view(
-            {
-                "get": "retrieve",
-                "put": "update",
-                "patch": "partial_update",
-                "delete": "destroy",
-            }
-        ),
+        "/reservations",
+        ReservationView.as_view({"get": "list", "post": "create"}),
     ),
     path(
         "/reservations/<int:pk>",
-        ReservationRetrievView.as_view(
+        ReservationView.as_view(
             {
                 "get": "retrieve",
                 "put": "update",
@@ -44,9 +31,5 @@ urlpatterns = [
                 "delete": "destroy",
             }
         ),
-    ),
-    path(
-        "/reservations/<int:card_id>/<str:time>",
-        ReservationView.as_view({"get": "list", "post": "create"}),
     ),
 ]
