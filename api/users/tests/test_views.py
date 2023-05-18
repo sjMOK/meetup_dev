@@ -3,7 +3,7 @@ import json
 from django.contrib.sessions.backends.db import SessionStore
 
 from rest_framework.test import APITestCase
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
 from .factories import UserFactory, TEST_PASSWORD, UserTypeFactory
 from ..models import User, UserType
@@ -19,7 +19,7 @@ class LoginViewTestCase(APITestCase):
         cls.user = UserFactory(user_type=user_type)
 
     def test_success(self):
-        response = self.client.post(self.url, {'username': self.user.username, 'password': TEST_PASSWORD}, format='json')
+        response = self.client.post(self.url, {'user_no': self.user.user_no, 'password': TEST_PASSWORD}, format='json')
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -28,14 +28,14 @@ class LoginViewTestCase(APITestCase):
         self.assertIn('csrftoken', response.cookies)
 
     def test_fail_with_wrong_credentials(self):
-        response = self.client.post(self.url, {'username': 'username', 'password': 'wrong_password'}, format='json')
+        response = self.client.post(self.url, {'user_no': 'user_no', 'password': 'wrong_password'}, format='json')
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
         self.assertEqual(body_data, {'detail': 'No matching user.'})
 
     def test_validation_fail(self):
-        response = self.client.post(self.url, {'username': 'username'}, format='json')
+        response = self.client.post(self.url, {'user_no': 'user_no'}, format='json')
         self.assertContains(response, 'password', status_code=HTTP_400_BAD_REQUEST)
 
 
@@ -47,7 +47,7 @@ class LogoutViewTestCase(APITestCase):
         user = UserFactory(user_type=user_type)
         s = SessionStore()
         
-        login_response = self.client.post('/users/login', {'username': user.username, 'password': TEST_PASSWORD}, format='json')
+        login_response = self.client.post('/users/login', {'user_no': user.user_no, 'password': TEST_PASSWORD}, format='json')
         session_id = login_response.cookies['sessionid'].value
         self.assertTrue(s.exists(session_id))
         
@@ -143,13 +143,19 @@ class UserViewSetTestCase(APITestCase):
 
         self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
 
+    def __test_pagination(self, body_data):
+        self.assertTrue('count' in body_data)
+        self.assertTrue('next' in body_data)
+        self.assertTrue('previous' in body_data)
+
     def test_list_by_admin_user(self):
         self.client.force_authenticate(self.admin_user)
         response = self.client.get(self.url)
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_200_OK)
-        self.assertListEqual(body_data, UserSerializer(User.objects.all(), many=True).data)
+        self.__test_pagination(body_data)
+        self.assertListEqual(body_data['results'], UserSerializer(User.objects.all(), many=True).data)
 
     def test_list_by_normal_user(self):
         self.client.force_authenticate(user=self.user)
@@ -163,20 +169,21 @@ class UserViewSetTestCase(APITestCase):
 
         self.assertEqual(response.status_code, HTTP_403_FORBIDDEN)
 
-    def test_list_search_by_username(self):
-        username = self.user.username
-        query_params = {'username': username}
+    def test_list_search_by_user_no(self):
+        user_no = self.user.user_no
+        query_params = {'user_no': user_no}
 
         self.client.force_authenticate(self.admin_user)
         response = self.client.get(self.url, query_params)
         body_data = json.loads(response.content)
 
         self.assertEqual(response.status_code, HTTP_200_OK)
-        self.assertListEqual(body_data, UserSerializer(User.objects.filter(username=username), many=True).data)
+        self.__test_pagination(body_data)
+        self.assertListEqual(body_data['results'], UserSerializer(User.objects.filter(user_no=user_no), many=True).data)
 
     def test_create(self):
         request_data = {
-            'username': 'newusername',
+            'user_no': 'new_user_no',
             'password': 'password',
             'name': 'newname',
             'email': 'new@naver.com',
@@ -185,10 +192,11 @@ class UserViewSetTestCase(APITestCase):
         
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.post(self.url, request_data, format='json')
-        created_user_id = response.get('Location')
+        body_data = json.loads(response.content)
+        created_user = User.objects.get(id=body_data['id'])
 
         self.assertEqual(response.status_code, HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(id=created_user_id).exists())
+        self.assertDictEqual(body_data, UserSerializer(created_user).data)
 
     def test_create_by_normal_user(self):
         self.client.force_authenticate(user=self.user)
@@ -228,7 +236,7 @@ class UserViewSetTestCase(APITestCase):
 
     def test_normal_user_try_to_update_non_patchable_field(self):
         self.url += f'/{self.user.id}'
-        reqeust_data = {'username': 'newusername', 'name': 'newname', 'email': 'new@naver.com'}
+        reqeust_data = {'user_no': 'new_user_no', 'name': 'newname', 'email': 'new@naver.com'}
 
         self.client.force_authenticate(user=self.user)
         response = self.client.patch(self.url, reqeust_data, format='json')
@@ -239,7 +247,7 @@ class UserViewSetTestCase(APITestCase):
 
     def test_admin_user_try_to_update_non_patchable_field(self):
         self.url += f'/{self.user.id}'
-        reqeust_data = {'username': 'newusername', 'name': 'newname', 'email': 'new@naver.com'}
+        reqeust_data = {'user_no': 'new_user_no', 'name': 'newname', 'email': 'new@naver.com'}
 
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.patch(self.url, reqeust_data, format='json')
@@ -261,7 +269,7 @@ class UserViewSetTestCase(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.delete(self.url)
 
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, HTTP_204_NO_CONTENT)
         self.assertFalse(User.objects.filter(id=self.user.id).exists())
 
     def test_delete_by_normal_user(self):
@@ -270,7 +278,7 @@ class UserViewSetTestCase(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.delete(self.url)
 
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, HTTP_204_NO_CONTENT)
         self.assertFalse(User.objects.filter(id=self.user.id).exists())
 
     def test_delete_by_anonymous_user(self):

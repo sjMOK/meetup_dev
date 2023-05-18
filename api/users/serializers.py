@@ -13,7 +13,7 @@ class UserTypeSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'name', 'email', 'user_type']
+        fields = ['id', 'user_no', 'password', 'name', 'email', 'user_type']
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -32,7 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(write_only=True, trim_whitespace=False)
+    user_no = serializers.CharField(write_only=True, trim_whitespace=False)
     password = serializers.CharField(write_only=True, trim_whitespace=False)
 
 
