@@ -11,7 +11,7 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 
 class RoomImageSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    image = serializers.ImageField(use_url=True, required=False)
+    image = serializers.ImageField(required=False)
 
     class Meta:
         model = RoomImages
@@ -29,6 +29,7 @@ class RoomSerializer(serializers.ModelSerializer):
         data = {
             "name": validated_data["name"],
             "discription": validated_data["discription"],
+            "amenities": validated_data["amenities"],
         }
         try:
             image = validated_data.pop("image")
