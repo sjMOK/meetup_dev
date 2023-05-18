@@ -25,15 +25,17 @@ class RoomView(viewsets.ModelViewSet):
 
     def create(self, request):
         serializer = RoomSerializer(data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             try:
                 serializer.save()
                 return Response({"message": "complete"})
-            except:
-                return Response({"message": "fail"})
+            except Exception as e:
+                return Response({"message": e})
         return Response({"message": "invalid form"})
 
 
 class ReservationView(viewsets.ModelViewSet):
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
+    # filter_backends = [DjangoFilterBackend]
+    # filterset_fields = ["category", "in_stock"]
