@@ -19,7 +19,6 @@ from .documentations import (
     UserResponse, UserListResponse
 )
 
-
 @swagger_auto_schema(method='POST', security=[], request_body=LoginSerializer, 
                      responses={200: UserResponse, 404: 'message: No matching user.\nbody의 user_no, password 틀렸을 때\n'}, 
                      operation_description=login_view_operation_description)
@@ -76,19 +75,19 @@ class UserViewSet(ModelViewSet):
     lookup_value_regex = r'[0-9]+'
     queryset = User.objects.all().order_by('user_type', 'user_no')
     serializer_class = UserSerializer
-    # permission_classes = [UserAccessPermission]
+    permission_classes = [UserAccessPermission]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['user_no']
 
-    # def get_object(self):
-    #     if self.request.user.is_admin():
-    #         return super().get_object()
-    #     return self.request.user
+    def get_object(self):
+        if self.request.user.is_admin():
+            return super().get_object()
+        return self.request.user
 
-    # def __validate_data_contains_non_patchable_fields(self):
-    #     if not self.request.user.is_admin():
-    #         return set(self.request.data).difference(self.__normal_user_patchable_fields)
-    #     return False
+    def __validate_data_contains_non_patchable_fields(self):
+        if not self.request.user.is_admin():
+            return set(self.request.data).difference(self.__normal_user_patchable_fields)
+        return False
 
     @swagger_auto_schema(responses={200: UserResponse, 404: not_found_response}, operation_description='id에 해당하는 유저 정보 조회')
     def retrieve(self, request, *args, **kwargs):
