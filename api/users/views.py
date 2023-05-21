@@ -76,7 +76,7 @@ class UserViewSet(ModelViewSet):
     lookup_value_regex = r'[0-9]+'
     queryset = User.objects.all().order_by('user_type', 'user_no')
     serializer_class = UserSerializer
-    permission_classes = [UserAccessPermission]
+    # permission_classes = [UserAccessPermission]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['user_no']
 
