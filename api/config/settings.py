@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rooms",
     "users",
+    "utils",
     "rest_framework",
     "drf_yasg",
     "django_filters",

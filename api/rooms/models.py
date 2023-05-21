@@ -35,13 +35,3 @@ class Reservation(models.Model):
     companion = models.ForeignKey(
         User, related_name="companion", on_delete=models.SET_NULL, null=True
     )
-
-
-class Notice(models.Model):
-    id = models.AutoField(primary_key=True)
-    popup = models.BooleanField(default=False)
-    start = models.DateTimeField(default=datetime.datetime.now)
-    end = models.DateTimeField(default=datetime.datetime.now)
-    title = models.CharField(max_length=63, null=True, blank=True)
-    content = models.TextField()
-    create_at = models.DateTimeField(auto_now_add=True)
