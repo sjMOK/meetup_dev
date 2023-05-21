@@ -1,8 +1,9 @@
 import json
 from rest_framework import viewsets
 from rest_framework.response import Response
-from .models import Reservation, Room, RoomImages
+from .models import Notice, Reservation, Room, RoomImages
 from .serializers import (
+    NoticeSerializer,
     ReservationSerializer,
     RoomSerializer,
 )
@@ -33,9 +34,25 @@ class RoomView(viewsets.ModelViewSet):
                 return Response({"message": e})
         return Response({"message": "invalid form"})
 
+    def update(self, request, id):
+        room = Room.objects.filter(id=id)
+        serializer = RoomSerializer(room, data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            try:
+                serializer.save()
+                return Response({"message": "complete"})
+            except Exception as e:
+                return Response({"message": e})
+        return Response({"message": "invalid form"})
+
 
 class ReservationView(viewsets.ModelViewSet):
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
     # filter_backends = [DjangoFilterBackend]
     # filterset_fields = ["category", "in_stock"]
+
+
+class NotiveView(viewsets.ModelViewSet):
+    serializer_class = NoticeSerializer
+    queryset = Notice.objects.all()

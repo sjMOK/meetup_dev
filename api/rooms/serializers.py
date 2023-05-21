@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Reservation, Room, RoomImages
+from .models import Notice, Reservation, Room, RoomImages
 from django.contrib.auth.models import User
 import logging, json
 from PIL import Image
@@ -39,7 +39,22 @@ class RoomSerializer(serializers.ModelSerializer):
             logging.warning("이미지 없음")
 
         room = Room.objects.create(**data)
+        return room
 
+    def update(self, instance, validated_data):
+        data = {
+            "name": validated_data["name"],
+            "discription": validated_data["discription"],
+            "amenities": validated_data["amenities"],
+        }
+        try:
+            image = validated_data.pop("image")
+            room_images = RoomImages.objects.create(image=image)
+            data["images"] = room_images
+        except ValueError:
+            logging.warning("이미지 없음")
+
+        room = instance.update(**data)
         return room
 
     class Meta:
@@ -52,4 +67,12 @@ class ReservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
+        fields = "__all__"
+
+
+class NoticeSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Notice
         fields = "__all__"
