@@ -21,7 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 import logging
 
-from users.permissions import UserAccessPermission, IsAuthenticatedNonAdminUser
+from users.permissions import UserAccessPermission, IsNonAdminUser
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

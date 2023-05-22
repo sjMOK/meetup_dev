@@ -12,7 +12,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 from .models import User, UserType
 from .serializers import LoginSerializer, UserSerializer, UserTypeSerializer, PasswordChangeSerializer
-from .permissions import IsAuthenticatedNonAdminUser, UserAccessPermission
+from .permissions import IsNonAdminUser, UserAccessPermission, IsAdminUser
 from .documentations import (
     logout_view_operation_description, login_view_operation_description, user_create_operation_description,
     user_partial_update_operation_description, change_password_operation_description, not_found_response,
@@ -57,7 +57,7 @@ def get_all_user_type(request):
 
 @swagger_auto_schema(method='PATCH', request_body=PasswordChangeSerializer, responses={200: '', 400: '데이터 형식 확인'}, operation_description=change_password_operation_description)
 @api_view(['PATCH'])
-@permission_classes([IsAuthenticatedNonAdminUser])
+@permission_classes([IsNonAdminUser])
 def change_password(request):
     serializer = PasswordChangeSerializer(request.user, data=request.data)
     serializer.is_valid(raise_exception=True)

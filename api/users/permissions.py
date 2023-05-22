@@ -17,6 +17,11 @@ class UserAccessPermission(IsAuthenticated):
         return obj == request.user
 
 
-class IsAuthenticatedNonAdminUser(IsAuthenticated):
+class IsNonAdminUser(IsAuthenticated):
     def has_permission(self, request, view):
         return super().has_permission(request, view) and not request.user.is_admin()
+    
+
+class IsAdminUser(IsAuthenticated):
+    def has_permission(self, request, view):
+        return super().has_permission(request, view) and request.user.is_admin()
