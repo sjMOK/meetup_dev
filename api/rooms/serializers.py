@@ -52,7 +52,7 @@ class RoomSerializer(serializers.ModelSerializer):
             image = validated_data.pop("image")
             room_images = RoomImages.objects.create(image=image)
             data["images"] = room_images
-        except ValueError:
+        except:
             logging.warning("이미지 없음")
 
         room = instance.update(**data)
