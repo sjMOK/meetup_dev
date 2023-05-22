@@ -104,8 +104,8 @@ class UserViewSet(ModelViewSet):
     @swagger_auto_schema(request_body=UserSerializer, responses={200: '', 400: '데이터 형식 확인', 404: not_found_response},
                          operation_description=user_partial_update_operation_description)
     def partial_update(self, request, *args, **kwargs):
-        # if self.__validate_data_contains_non_patchable_fields():
-        #     return Response('The data contains fields cannot be updated.', status=HTTP_400_BAD_REQUEST)
+        if self.__validate_data_contains_non_patchable_fields():
+            return Response('The data contains fields cannot be updated.', status=HTTP_400_BAD_REQUEST)
 
         return super().partial_update(request, *args, **kwargs)
     
@@ -113,3 +113,7 @@ class UserViewSet(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+    @swagger_auto_schema(responses={200: UserResponse}, operation_description='token에 해당하는 user 정보 조회')
+    @action(detail=False, methods=['GET'], url_path='mine')
+    def retrieve_mine(self, request, *args, **kwargs):
+        return Response(UserSerializer(request.user).data)
