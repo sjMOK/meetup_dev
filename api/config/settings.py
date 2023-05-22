@@ -149,5 +149,3 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 60,
 }
-
-SESSION_COOKIE_SAMESITE = 'None'

@@ -80,15 +80,15 @@ class UserViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['user_no']
 
-    def get_object(self):
-        if self.request.user.is_admin():
-            return super().get_object()
-        return self.request.user
+    # def get_object(self):
+    #     if self.request.user.is_admin():
+    #         return super().get_object()
+    #     return self.request.user
 
-    def __validate_data_contains_non_patchable_fields(self):
-        if not self.request.user.is_admin():
-            return set(self.request.data).difference(self.__normal_user_patchable_fields)
-        return False
+    # def __validate_data_contains_non_patchable_fields(self):
+    #     if not self.request.user.is_admin():
+    #         return set(self.request.data).difference(self.__normal_user_patchable_fields)
+    #     return False
 
     @swagger_auto_schema(responses={200: UserResponse, 404: not_found_response}, operation_description='id에 해당하는 유저 정보 조회')
     def retrieve(self, request, *args, **kwargs):
@@ -105,8 +105,8 @@ class UserViewSet(ModelViewSet):
     @swagger_auto_schema(request_body=UserSerializer, responses={200: '', 400: '데이터 형식 확인', 404: not_found_response},
                          operation_description=user_partial_update_operation_description)
     def partial_update(self, request, *args, **kwargs):
-        if self.__validate_data_contains_non_patchable_fields():
-            return Response('The data contains fields cannot be updated.', status=HTTP_400_BAD_REQUEST)
+        # if self.__validate_data_contains_non_patchable_fields():
+        #     return Response('The data contains fields cannot be updated.', status=HTTP_400_BAD_REQUEST)
 
         return super().partial_update(request, *args, **kwargs)
     
