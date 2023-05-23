@@ -10,6 +10,7 @@ from rest_framework.status import (
 from django.core.exceptions import BadRequest
 from .models import Reservation, Room, RoomImages
 from .serializers import (
+    MyReservationSerializer,
     ReservationSerializer,
     RoomSerializer,
 )
@@ -21,7 +22,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 import logging
 
-from users.permissions import UserAccessPermission, IsNonAdminUser
+from users.permissions import (
+    IsAdminOrReadOnly,
+    IsOwnerOrAdmin,
+    UserAccessPermission,
+    IsNonAdminUser,
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -45,7 +51,7 @@ def check_schedule_conflict(start_date, end_date):
 
 
 class RoomView(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
     lookup_field = "id"
@@ -73,7 +79,29 @@ class RoomView(viewsets.ModelViewSet):
 
 
 class ReservationView(viewsets.ModelViewSet):
+    # permission_classes = [IsAuthenticated]
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["date", "room"]
+
+    def create(self, request):
+        serializer = ReservationSerializer(data=request.data, booker=request.user)
+        if serializer.is_valid(raise_exception=True):
+            try:
+                serializer.save()
+                return Response({"message": "complete"})
+            except Exception as e:
+                return Response({"message": e})
+        return Response({"message": "invalid form"})
+
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+
+class MyReservationView(viewsets.ModelViewSet):
+    # permission_classes = [IsOwnerOrAdmin]
+    serializer_class = MyReservationSerializer
+    queryset = Reservation.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["date", "booker"]

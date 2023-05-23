@@ -28,10 +28,8 @@ class Reservation(models.Model):
     end = models.DateTimeField(default=datetime.datetime.now)
     reason = models.CharField(max_length=63, null=True, blank=True)
     status = models.IntegerField(choices=STATUS_CHOICE, default=0)
-    booker = models.ForeignKey(
-        User, related_name="booker", on_delete=models.SET_NULL, null=True
-    )
-    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True)
+    booker = models.ForeignKey(User, related_name="booker", on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
     companion = models.ForeignKey(
-        User, related_name="companion", on_delete=models.SET_NULL, null=True
+        User, related_name="companion", on_delete=models.CASCADE
     )
