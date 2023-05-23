@@ -25,55 +25,6 @@ from .documentations import (
 )
 
 
-@api_view(['POST'])
-@authentication_classes([])
-def user_bulk_create(request):
-    error_occured = False
-    file = request.FILES['file_excel']
-    decoded_file = file.read().decode('euc-kr').splitlines()
-   
-    rdr = csv.reader(decoded_file)
-    user_no_list = [line[0] for line in list(rdr)[2:]]
-
-    file.seek(0)
-    rdr = csv.DictReader(decoded_file)
-    next(rdr)
-    lines = []
-    validated_data_lst = []
-    for line in rdr:
-        if user_no_list.count(line['user_no']) > 1:
-            line['user_no_duplicated'] = True
-            error_occured = True
-
-        serializer = UserSerializer(data=line)
-        if serializer.is_valid():
-            validated_data_lst.append(serializer.validated_data)
-        else:
-            line['errors'] = serializer.errors
-            error_occured = True
-
-        lines.append(line)
-
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="users.csv"'
-    response.write(u'\ufeff'.encode('utf8'))
-
-    fieldnames = rdr.fieldnames
-    fieldnames += ['user_no_duplicated', 'errors']
-
-    writer = csv.DictWriter(response, fieldnames=fieldnames)
-    writer.writeheader()
-    writer.writerows(lines)
-
-    if not error_occured:
-        User.objects.bulk_create(
-            [User(**data) for data in validated_data_lst]
-        )
-    else:
-        response.status_code = HTTP_400_BAD_REQUEST
-
-    return response
-
 class UserCsvCreateView(APIView):
     parser_classes = [MultiPartParser, PlainTextParser]
 
@@ -131,10 +82,8 @@ class UserCsvCreateView(APIView):
 
         if not error_occured:
             User.objects.bulk_create(
-                [User(**data) for data in validated_data_lst]
+                [User.objects.get_user_instance(**data) for data in validated_data_lst]
             )
-        else:
-            response.status_code = HTTP_400_BAD_REQUEST
 
         return response
     
