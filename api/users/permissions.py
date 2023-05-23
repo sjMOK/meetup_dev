@@ -4,9 +4,9 @@ from rest_framework.permissions import IsAuthenticated
 class UserAccessPermission(IsAuthenticated):
     def has_permission(self, request, view):
         if super().has_permission(request, view):
-            if view.action in ['list', 'create']:
+            if view.action == 'create':
                 return request.user.is_admin()
-            elif view.action in ['retrieve', 'partial_update', 'destroy', 'retrieve_mine']:
+            else:
                 return True
 
         return False
