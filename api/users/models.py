@@ -4,18 +4,22 @@ from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, password=None, **kwargs):
+    def create_user(self, *args, **kwargs):
+        user = self.get_user_instance(**kwargs)
+        user.save()
+        return user
+
+    def create(self, **kwargs):
+        return self.create_user(**kwargs)
+
+    def get_user_instance(self, email, password=None, **kwargs):
         user = self.model(
             email=self.normalize_email(email),
             **kwargs
         )
 
         user.set_password(password)
-        user.save(using=self._db)
         return user
-
-    def create(self, **kwargs):
-        return self.create_user(**kwargs)
 
 
 class User(AbstractBaseUser):
