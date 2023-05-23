@@ -10,15 +10,23 @@ class UserTypeSerializer(serializers.Serializer):
     possible_duration = serializers.IntegerField(read_only=True)
 
 
+class UserDepartmentSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'user_no', 'password', 'name', 'email', 'user_type']
+        fields = ['id', 'user_no', 'password', 'name', 'email', 'user_type', 'department']
         extra_kwargs = {
             'password': {
                 'write_only': True,
                 'min_length': 8,
             },
+            'department': {
+                'required': True
+            }
         }
 
     def to_representation(self, instance):
