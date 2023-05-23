@@ -15,8 +15,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 
 from common.parsers import PlainTextParser
-from .models import User, UserType
-from .serializers import LoginSerializer, UserSerializer, UserTypeSerializer, PasswordChangeSerializer
+from .models import User, UserType, UserDepartment
+from .serializers import LoginSerializer, UserSerializer, UserTypeSerializer, UserDepartmentSerializer, PasswordChangeSerializer
 from .permissions import IsNonAdminUser, UserAccessPermission
 from .documentations import (
     logout_view_operation_description, login_view_operation_description, user_create_operation_description,
@@ -128,6 +128,15 @@ def logout_view(request):
 def get_all_user_type(request):
     queryset = UserType.objects.all()
     serializer = UserTypeSerializer(queryset, many=True)
+    return Response(serializer.data)
+
+
+@swagger_auto_schema(method='GET', security=[], responses={200: UserDepartmentSerializer(many=True)}, operation_description='모든 user 학과 데이터 조회')
+@api_view(['GET'])
+@authentication_classes([])
+def get_all_user_departments(request):
+    queryset = UserDepartment.objects.all()
+    serializer = UserDepartmentSerializer(queryset, many=True)
     return Response(serializer.data)
 
 
