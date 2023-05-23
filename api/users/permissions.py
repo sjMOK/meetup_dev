@@ -6,7 +6,7 @@ class UserAccessPermission(IsAuthenticated):
         if super().has_permission(request, view):
             if view.action in ['list', 'create']:
                 return request.user.is_admin()
-            elif view.action in ['retrieve', 'partial_update', 'destroy']:
+            elif view.action in ['retrieve', 'partial_update', 'destroy', 'retrieve_mine']:
                 return True
 
         return False
