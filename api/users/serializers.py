@@ -15,7 +15,10 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'user_no', 'password', 'name', 'email', 'user_type']
         extra_kwargs = {
-            'password': {'write_only': True},
+            'password': {
+                'write_only': True,
+                'min_length': 8,
+            },
         }
 
     def to_representation(self, instance):

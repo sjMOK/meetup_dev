@@ -35,6 +35,11 @@ class UserSerializerTestCase(APITestCase):
         serializer = UserSerializer()
         self.assertTrue(serializer.fields['password'].write_only)
 
+    def test_password_field_length(self):
+        serializer = UserSerializer()
+        self.assertTrue(serializer.fields['password'].max_length, 128)
+        self.assertTrue(serializer.fields['password'].min_length, 8)
+
     def test_serialization(self):
         serializer = UserSerializer(self.user)
         expected_data = {
