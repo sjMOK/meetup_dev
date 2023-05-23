@@ -28,6 +28,7 @@ class User(AbstractBaseUser):
     name = models.CharField(max_length=45)
     email = models.EmailField()
     user_type = models.ForeignKey('UserType', models.DO_NOTHING)
+    major = models.ForeignKey('UserMajor', models.DO_NOTHING)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
 
@@ -61,6 +62,18 @@ class UserType(models.Model):
 
     class Meta:
         db_table = 'user_type'
+        ordering = ['id']
+
+    def __str__(self):
+        return self.name
+
+
+class UserMajor(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = 'user_major'
         ordering = ['id']
 
     def __str__(self):
