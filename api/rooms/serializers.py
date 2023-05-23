@@ -63,9 +63,26 @@ class RoomSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class BookerSerialzier(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["name", "email", "user_type", "department"]
+
+
 class ReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Reservation
         fields = "__all__"
+        write_only_fields = ["booker"]
+
+
+class MyReservationSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    booker = BookerSerialzier(read_only=True)
+    room = serializers.SlugRelatedField(read_only=True, slug_field="id")
+
+    class Meta:
+        model = Reservation
+        fields = ["id", "date", "room", "booker", "start", "end"]

@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    MyReservationView,
     ReservationView,
     RoomView,
 )
@@ -31,5 +32,9 @@ urlpatterns = [
                 "delete": "destroy",
             }
         ),
+    ),
+    path(
+        "/my-reservations",
+        MyReservationView.as_view({"get": "list", "post": "create"}),
     ),
 ]
