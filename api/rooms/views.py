@@ -75,7 +75,7 @@ class RoomView(viewsets.ModelViewSet):
 
 
 class ReservationView(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend]
