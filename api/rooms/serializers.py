@@ -75,13 +75,12 @@ class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = "__all__"
-        write_only_fields = ["booker"]
 
 
 class MyReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     booker = BookerSerialzier(read_only=True)
-    room = serializers.SlugRelatedField(read_only=True, slug_field="id")
+    room = RoomSerializer(read_only=True)
 
     class Meta:
         model = Reservation

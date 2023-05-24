@@ -34,18 +34,14 @@ logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 
-def check_schedule_conflict(start_date, end_date):
-    conflicting_schedules = Room.objects.filter(
-        start_date__lt=end_date,  # 등록하려는 일정의 종료일 이후에 시작하는 일정
-        end_date__gt=start_date,  # 등록하려는 일정의 시작일 이전에 종료하는 일정
+def check_schedule_conflict(start, end):
+    conflicting_schedules = Reservation.objects.filter(
+        start__lt=end,  # 등록하려는 일정의 종료일 이후에 시작하는 일정
+        end__gt=start,  # 등록하려는 일정의 시작일 이전에 종료하는 일정
     )
-
-    if conflicting_schedules.exists():
+    logger.warning(conflicting_schedules.id)
+    if conflicting_schedules:
         raise BadRequest  # 겹치는 일정이 존재하는 경우
-
-    # 등록하려는 일정이 현재 시간 이전인지 확인합니다.
-    if start_date < datetime.now():
-        raise BadRequest  # 이미 지난 일정인 경우
 
     return  # 겹치는 일정이 없는 경우
 
@@ -79,14 +75,18 @@ class RoomView(viewsets.ModelViewSet):
 
 
 class ReservationView(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["date", "room"]
 
     def create(self, request):
-        serializer = ReservationSerializer(data=request.data, booker=request.user)
+        # if not check_schedule_conflict(
+        #     request.data.get("start"), request.data.get("end")
+        # ):
+        #     raise BadRequest
+        serializer = ReservationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             try:
                 serializer.save()
@@ -95,12 +95,9 @@ class ReservationView(viewsets.ModelViewSet):
                 return Response({"message": e})
         return Response({"message": "invalid form"})
 
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
 
 class MyReservationView(viewsets.ModelViewSet):
-    # permission_classes = [IsOwnerOrAdmin]
+    permission_classes = [IsOwnerOrAdmin]
     serializer_class = MyReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend]

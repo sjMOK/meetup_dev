@@ -37,4 +37,15 @@ urlpatterns = [
         "/my-reservations",
         MyReservationView.as_view({"get": "list", "post": "create"}),
     ),
+    path(
+        "/my-reservations/<int:pk>",
+        ReservationView.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+    ),
 ]
