@@ -86,6 +86,7 @@ class ReservationView(viewsets.ModelViewSet):
     filterset_fields = ["date", "room"]
 
     def create(self, request):
+        logger.warning(request.user)
         serializer = ReservationSerializer(data=request.data, booker=request.user)
         if serializer.is_valid(raise_exception=True):
             try:

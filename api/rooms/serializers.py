@@ -72,10 +72,14 @@ class BookerSerialzier(serializers.ModelSerializer):
 class ReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
+    def create(self, validated_data, booker):
+        reservation = Reservation.objects.create(**validated_data, booker=booker)
+        reservation.save()
+        return True
+
     class Meta:
         model = Reservation
-        fields = "__all__"
-        write_only_fields = ["booker"]
+        exclude = ["booker"]
 
 
 class MyReservationSerializer(serializers.ModelSerializer):
