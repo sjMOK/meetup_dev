@@ -1,6 +1,10 @@
 import csv
+import requests
+import json
 
+from django.conf import settings
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 
 from rest_framework.response import Response
@@ -15,7 +19,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 
 from common.parsers import PlainTextParser
-from .models import User, UserType, UserDepartment
+from .models import User, UserType, UserDepartment, GoogleAccount
 from .serializers import LoginSerializer, UserSerializer, UserTypeSerializer, UserDepartmentSerializer, PasswordChangeSerializer
 from .permissions import IsNonAdminUser, UserAccessPermission
 from .documentations import (
@@ -83,6 +87,69 @@ def change_password(request):
     update_session_auth_hash(request, request.user)
 
     return Response()
+
+
+@api_view(['POST', 'GET'])
+@permission_classes([IsNonAdminUser])
+def google_login(request):
+    if hasattr(request.user, 'google_account'):
+        return Response('You already have signed up with google account.', HTTP_400_BAD_REQUEST)
+
+    client_id = getattr(settings, 'GOOGLE_CLIENT_ID')
+    redirect_uri = getattr(settings, 'GOOGLE_REDIRECT_URI')
+    scope = 'https://www.googleapis.com/auth/calendar'
+    state = json.dumps({"user_id": request.user.id})
+
+    request_uri = ('https://accounts.google.com/o/oauth2/v2/auth?'
+                   'scope=' + scope + '&'
+                   'access_type=offline&'
+                   'response_type=code&'
+                   'redirect_uri=' + redirect_uri + '&'
+                   'client_id=' + client_id + '&'
+                   'state=' + state)
+
+    return redirect(request_uri)
+
+
+@api_view(['GET'])
+def google_callback(request):
+    state = json.loads(request.query_params['state'])
+
+    client_id = getattr(settings, 'GOOGLE_CLIENT_ID')
+    client_secret = getattr(settings, 'GOOGLE_CLIENT_SECRET')
+    redirect_uri = getattr(settings, 'GOOGLE_REDIRECT_URI')
+    authorization_code = request.query_params['code']
+
+    request_uri = ('https://oauth2.googleapis.com/token?'
+                   'client_id=' + client_id + '&'
+                   'client_secret=' + client_secret + '&'
+                   'code=' + authorization_code + '&'
+                   'grant_type=authorization_code&'
+                   'redirect_uri=' + redirect_uri)
+    response = requests.post(request_uri)
+    body_data = response.json()
+
+    access_token, refresh_token = body_data['access_token'], body_data['refresh_token']
+    GoogleAccount.objects.create(user_id=state['user_id'], access_token=access_token, refresh_token=refresh_token)
+
+    return Response()
+
+
+@api_view(['POST'])
+@permission_classes([IsNonAdminUser])
+def google_revoke(request):
+    if not hasattr(request.user, 'google_account'):
+        return Response('You have not signed up with google account.')
+
+    refresh_token = request.user.google_account.refresh_token
+    uri = f'https://oauth2.googleapis.com/revoke?token={refresh_token}'
+
+    response = requests.post(uri)
+    if response.status_code == 200:
+        request.user.google_account.delete()
+        return Response()
+    else:
+        return Response(response.json())
 
 
 class UserViewSet(ModelViewSet):

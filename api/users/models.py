@@ -53,6 +53,15 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return f'{self.user_no} {self.name}({self.user_type})'
+    
+
+class GoogleAccount(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='google_account')
+    access_token = models.CharField(max_length=2500)
+    refresh_token = models.CharField(max_length=1000)
+
+    class Meta:
+        db_table = 'google_account'
 
 
 class UserType(models.Model):
