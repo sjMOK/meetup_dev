@@ -72,20 +72,15 @@ class BookerSerialzier(serializers.ModelSerializer):
 class ReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 
-    def create(self, validated_data, booker):
-        reservation = Reservation.objects.create(**validated_data, booker=booker)
-        reservation.save()
-        return True
-
     class Meta:
         model = Reservation
-        exclude = ["booker"]
+        fields = "__all__"
 
 
 class MyReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     booker = BookerSerialzier(read_only=True)
-    room = serializers.SlugRelatedField(read_only=True, slug_field="id")
+    room = RoomSerializer(read_only=True)
 
     class Meta:
         model = Reservation
