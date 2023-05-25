@@ -6,13 +6,17 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
+from django.utils.crypto import get_random_string
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
 from rest_framework.exceptions import NotFound
 from rest_framework.views import APIView
 from rest_framework.viewsets import  ModelViewSet
-from rest_framework.status import HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.parsers import MultiPartParser
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -176,6 +180,15 @@ class UserViewSet(ModelViewSet):
             return set(self.request.data).difference(self.__normal_user_patchable_fields)
         return False
 
+    def __send_initial_password_email(self, password, to_email):
+        send_mail(
+            '초기 비밀번호를 안내드립니다.',
+            f'비밀번호  {password}',
+            from_email=None,
+            recipient_list=[to_email],
+            html_message=render_to_string('mailing/initial_password.html', context={'password': password})
+        )
+
     @swagger_auto_schema(responses={200: UserResponse, 404: not_found_response}, operation_description='id에 해당하는 유저 정보 조회')
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
@@ -184,9 +197,18 @@ class UserViewSet(ModelViewSet):
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
     
-    @swagger_auto_schema(request_body=UserSerializer, responses={201: '', 400: '데이터 형식 확인'}, operation_description=user_create_operation_description)
+    @swagger_auto_schema(request_body=UserSerializer, responses={201: UserSerializer, 400: '데이터 형식 확인'}, operation_description=user_create_operation_description)
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        data = request.data
+        data['password'] = get_random_string(length=8)
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        self.__send_initial_password_email(data['password'], data['email'])
+
+        return Response(serializer.data, status=HTTP_201_CREATED)
 
     @swagger_auto_schema(request_body=UserSerializer, responses={200: '', 400: '데이터 형식 확인', 404: not_found_response},
                          operation_description=user_partial_update_operation_description)
