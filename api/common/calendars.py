@@ -6,8 +6,8 @@ from rest_framework.exceptions import APIException
 def create_calendar_event(user, summary, start_datetime, end_datetime, location):
     '''
     summary(string): 이벤트의 제목
-    start_datetime(datetime): 이벤트 시작 시간
-    end_datetime(datetime): 이벤트 종료 시간
+    start_datetime(datetime): 이벤트 시작 시간 ex)2023-05-25T20:00:00+09:00
+    end_datetime(datetime): 이벤트 종료 시간 ex)2023-05-25T22:00:00+09:00
     location(string): 이벤트의 지리적 위치
     '''
     if not hasattr(user, 'google_account'):
@@ -32,9 +32,8 @@ def create_calendar_event(user, summary, start_datetime, end_datetime, location)
         print('success')
     else:
         print('fail')
-        print(response.json())
     
-    return response
+    return response.json()
 
 
 def delete_calendar_event(user, event_id):
