@@ -90,16 +90,18 @@ def change_password(request):
     return Response()
 
 
-@api_view(['POST', 'GET'])
+@api_view(['POST'])
 @permission_classes([IsNonAdminUser])
 def google_login(request):
-    if hasattr(request.user, 'google_account'):
+    user = request.user
+
+    if hasattr(user, 'google_account'):
         return Response('You already have signed up with google account.', HTTP_400_BAD_REQUEST)
 
     client_id = getattr(settings, 'GOOGLE_CLIENT_ID')
     redirect_uri = getattr(settings, 'GOOGLE_REDIRECT_URI')
     scope = 'https://www.googleapis.com/auth/calendar'
-    state = json.dumps({"user_id": request.user.id})
+    state = json.dumps({"user_id": user.id})
 
     request_uri = ('https://accounts.google.com/o/oauth2/v2/auth?'
                    'scope=' + scope + '&'
@@ -139,18 +141,20 @@ def google_callback(request):
 @api_view(['POST'])
 @permission_classes([IsNonAdminUser])
 def google_revoke(request):
-    if not hasattr(request.user, 'google_account'):
+    user = request.user
+
+    if not hasattr(user, 'google_account'):
         return Response('You have not signed up with google account.')
 
-    refresh_token = request.user.google_account.refresh_token
+    refresh_token = user.google_account.refresh_token
     uri = f'https://oauth2.googleapis.com/revoke?token={refresh_token}'
 
     response = requests.post(uri)
     if response.status_code == 200:
-        request.user.google_account.delete()
+        user.google_account.delete()
         return Response()
     else:
-        return Response(response.json())
+        return Response(response.json(), HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(ModelViewSet):
