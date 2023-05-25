@@ -240,7 +240,7 @@ class UserCsvCreateView(APIView):
     @swagger_auto_schema(responses={200: '결과 데이터 csv', 400: '파일 key 이름 확인(user_input)'}, operation_description=user_bulk_create_operation_description)
     def post(self, request, *args, **kwargs):
         if 'user_input' not in request.FILES:
-            return Response("File key error(input).", HTTP_400_BAD_REQUEST)
+            return Response("File key error(user_input).", HTTP_400_BAD_REQUEST)
 
         file = request.FILES['user_input']
         decoded_file = file.read().decode('euc-kr').splitlines()
