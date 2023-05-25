@@ -24,7 +24,8 @@ from .serializers import LoginSerializer, UserSerializer, UserTypeSerializer, Us
 from .permissions import IsNonAdminUser, UserAccessPermission
 from .documentations import (
     logout_view_operation_description, login_view_operation_description, user_create_operation_description,
-    user_partial_update_operation_description, change_password_operation_description, not_found_response, user_bulk_delete_operation_description,
+    user_partial_update_operation_description, change_password_operation_description, not_found_response,
+    user_bulk_delete_operation_description, user_bulk_create_operation_description,
     UserResponse, UserListResponse
 )
 
@@ -225,22 +226,23 @@ class UserCsvCreateView(APIView):
 
         return error_occured, lines, validated_data_lst
 
-    def get_attachment_response(self):
+    def get_response(self):
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="users.csv"'
         response.write(u'\ufeff'.encode('utf8'))
         return response
 
-    def write_csv(self, response, fieldnames, lines):
+    def write_csv(self, response, fieldnames, ko_header, lines):
         writer = csv.DictWriter(response, fieldnames=fieldnames)
         writer.writeheader()
+        writer.writerow(ko_header)
         writer.writerows(lines)
 
+    @swagger_auto_schema(responses={200: '결과 데이터 csv', 400: '파일 key 이름 확인(user_input)'}, operation_description=user_bulk_create_operation_description)
     def post(self, request, *args, **kwargs):
-        if 'user_data' not in request.FILES:
-            return Response("File key error(user_data).", HTTP_400_BAD_REQUEST)
+        if 'user_input' not in request.FILES:
+            return Response("File key error(input).", HTTP_400_BAD_REQUEST)
 
-        file = request.FILES['user_data']
+        file = request.FILES['user_input']
         decoded_file = file.read().decode('euc-kr').splitlines()
     
         rdr = csv.reader(decoded_file)
@@ -248,13 +250,12 @@ class UserCsvCreateView(APIView):
 
         file.seek(0)
         dict_rdr = csv.DictReader(decoded_file)
-        next(dict_rdr)
+        ko_header = next(dict_rdr)
         error_occured, lines, validated_data_lst = self.validate(dict_rdr, user_no_list)
 
-        response = self.get_attachment_response()
-
+        response = self.get_response()
         fieldnames = dict_rdr.fieldnames + ['user_no_duplicated', 'errors']
-        self.write_csv(response, fieldnames, lines)
+        self.write_csv(response, fieldnames, ko_header, lines)
 
         if not error_occured:
             User.objects.bulk_create(
