@@ -28,12 +28,8 @@ def create_calendar_event(user, summary, start_datetime, end_datetime, location)
     access_token = user.google_account.access_token
     headers = {'Authorization': f'Bearer {access_token}'}
     response = requests.post(request_uri, headers=headers, json=body_data)
-    if response.status_code == 200:
-        print('success')
-    else:
-        print('fail')
     
-    return response.json()
+    return response
 
 
 def delete_calendar_event(user, event_id):
