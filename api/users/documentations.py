@@ -20,15 +20,18 @@ user_no와 password에 일치하는 유저 없을 시 400 에러(No matching use
 쿠키에 이미 발급 받은 세션 담아서 보낼 경우 해당 세션의 만료 기한 연장 후 반환
 '''
 
+
 change_password_operation_description = '''
 user 비밀번호 변경 요청
 body의 current_password와 user의 현재 비밀번호가 일치해야 하며 현재 비밀번호와 변경하고자 하는 비밀번호가 달라야함
 '''
 
+
 user_create_operation_description = '''
 user 생성 요청
 body의 필드가 잘못된 형식일 경우 해당 필드 이름이 key, 이유가 value인 메세지와 함께 400 반환
 '''
+
 
 user_partial_update_operation_description = '''
 user 데이터 변경 요청
@@ -36,6 +39,18 @@ user 데이터 변경 요청
 body의 필드가 잘못된 형식일 경우 해당 필드 이름이 key, 이유가 value인 메세지와 함께 400 반환
 일반 유저의 경우 name(이름), email(이메일)만 변경 가능, admin 유저의 경우 user_no(학번/교번), user_type(타입)도 변경 가능
 '''
+
+user_bulk_delete_operation_description = '''
+user 다중 삭제
+삭제하고자 하는 user_no를 개행으로 구분하여 http body에 text 전달, header에 Content-Type: text/plain로 전달
+ex)
+17011111
+17011112
+17011113
+17011114
+17011115
+'''
+
 
 class UserResponse(serializers.Serializer):
     id = serializers.IntegerField()

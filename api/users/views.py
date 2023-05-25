@@ -24,7 +24,7 @@ from .serializers import LoginSerializer, UserSerializer, UserTypeSerializer, Us
 from .permissions import IsNonAdminUser, UserAccessPermission
 from .documentations import (
     logout_view_operation_description, login_view_operation_description, user_create_operation_description,
-    user_partial_update_operation_description, change_password_operation_description, not_found_response,
+    user_partial_update_operation_description, change_password_operation_description, not_found_response, user_bulk_delete_operation_description,
     UserResponse, UserListResponse
 )
 
@@ -263,6 +263,7 @@ class UserCsvCreateView(APIView):
 
         return response
     
+    @swagger_auto_schema(responses={200: '0: 삭제된 user의 숫자'}, operation_description=user_bulk_delete_operation_description)
     def delete(self, request, *args, **kwargs):
         data_to_str = request.data.decode('utf-8')
         user_no_lst = data_to_str.splitlines()
