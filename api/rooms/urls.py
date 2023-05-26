@@ -3,6 +3,7 @@ from .views import (
     MyReservationView,
     ReservationView,
     RoomView,
+    authenticate_location,
 )
 
 urlpatterns = [
@@ -47,5 +48,9 @@ urlpatterns = [
                 "delete": "destroy",
             }
         ),
+    ),
+    path(
+        "/reservations/<int:id>/location",
+        authenticate_location
     ),
 ]

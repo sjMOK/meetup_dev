@@ -94,10 +94,13 @@ def change_password(request):
     return Response()
 
 
-@api_view(['POST'])
-@permission_classes([IsNonAdminUser])
+@api_view(['GET'])
+# @permission_classes([IsNonAdminUser])
 def google_login(request):
-    user = request.user
+    # user = request.user
+    if 'user_no' not in request.query_params:
+        return Response('pass user_no', HTTP_400_BAD_REQUEST)
+    user = User.objects.get(user_no=request.query_params['user_no'])
 
     if hasattr(user, 'google_account'):
         return Response('You already have signed up with google account.', HTTP_400_BAD_REQUEST)
@@ -240,6 +243,8 @@ class UserCsvCreateView(APIView):
             if user_no_list.count(line['user_no']) > 1:
                 line['user_no_duplicated'] = True
                 error_occured = True
+            else:
+                line['user_no_duplicated'] = ''
 
             serializer = UserSerializer(data=line)
             if serializer.is_valid():
@@ -279,16 +284,23 @@ class UserCsvCreateView(APIView):
         ko_header = next(dict_rdr)
         error_occured, lines, validated_data_lst = self.validate(dict_rdr, user_no_list)
 
-        response = self.get_response()
-        fieldnames = dict_rdr.fieldnames + ['user_no_duplicated', 'errors']
-        self.write_csv(response, fieldnames, ko_header, lines)
+        ko_header['user_no_duplicated'], ko_header['errors'] = '학번/직번 중복', '데이터 형식 에러'
+        lines.insert(0, ko_header)
+
+        # response = self.get_response()
+        # fieldnames = dict_rdr.fieldnames + ['user_no_duplicated', 'errors']
+        # self.write_csv(response, fieldnames, ko_header, lines)
 
         if not error_occured:
             User.objects.bulk_create(
                 [User.objects.get_user_instance(**data) for data in validated_data_lst]
             )
 
-        return response
+        # return response
+        return Response({
+            'error_occured': error_occured,
+            'results': lines,
+            })
     
     @swagger_auto_schema(responses={200: '0: 삭제된 user의 숫자'}, operation_description=user_bulk_delete_operation_description)
     def delete(self, request, *args, **kwargs):
