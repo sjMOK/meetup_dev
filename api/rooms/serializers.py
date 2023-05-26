@@ -84,4 +84,4 @@ class MyReservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = ["id", "date", "room", "booker", "start", "end"]
+        fields = "__all__"

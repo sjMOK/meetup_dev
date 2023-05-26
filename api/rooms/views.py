@@ -17,6 +17,7 @@ from .serializers import (
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
+from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
@@ -131,5 +132,6 @@ class MyReservationView(viewsets.ModelViewSet):
     permission_classes = [IsOwnerOrAdmin]
     serializer_class = MyReservationSerializer
     queryset = Reservation.objects.all()
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["date", "booker"]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ["date", "booker", "is_scheduled"]
+    search_fields = ["day"]
