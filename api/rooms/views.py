@@ -7,6 +7,7 @@ from rest_framework.status import (
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
 )
+from rest_framework.decorators import api_view
 from django.core.exceptions import BadRequest
 from .models import Reservation, Room, RoomImages
 from .serializers import (
@@ -21,6 +22,7 @@ from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 import logging
+from haversine import haversine
 
 from users.permissions import (
     IsAdminOrReadOnly,
@@ -28,6 +30,11 @@ from users.permissions import (
     UserAccessPermission,
     IsNonAdminUser,
 )
+
+
+AI_CENTER_POINT = (37.551100, 127.075750)
+ALLOWED_DISTANCE = 25
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -44,6 +51,30 @@ def check_schedule_conflict(start, end):
         raise BadRequest  # 겹치는 일정이 존재하는 경우
 
     return  # 겹치는 일정이 없는 경우
+
+
+@api_view(['POST'])
+def authenticate_location(request, id):
+    latitude, logtitude = request.query_params.get('latitude', None), request.query_params.get('logtitude', None)
+    if latitude is None or logtitude is None:
+        return Response('pass latitude and logtitude', HTTP_400_BAD_REQUEST)
+
+    try:
+        latitude, logtitude = float(latitude), float(logtitude)
+    except ValueError:
+        return Response('latitude and logtitude must be a float format.', HTTP_400_BAD_REQUEST)
+
+    current_point = (latitude, logtitude)
+    distance = haversine(AI_CENTER_POINT, current_point, unit='m')
+
+    if distance < ALLOWED_DISTANCE:
+        # 위치 인증 성공
+        pass
+    else:
+        # 위치 인증 실패
+        pass
+
+    return Response(distance < ALLOWED_DISTANCE)
 
 
 class RoomView(viewsets.ModelViewSet):
