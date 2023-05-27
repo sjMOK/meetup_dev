@@ -134,7 +134,7 @@ class ReservationView(viewsets.ModelViewSet):
 
 
 class MyReservationView(viewsets.ModelViewSet):
-    permission_classes = [IsOwnerOrAdmin]
+    # permission_classes = [IsOwnerOrAdmin]
     serializer_class = MyReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter]
