@@ -61,7 +61,7 @@ def check_schedule_conflict(start, end):
 @swagger_auto_schema(method='POST',
                      manual_parameters=[Parameter('latitude', IN_QUERY, type=TYPE_NUMBER, description='실수 형식으로 표현된 위도\nex)37.551100'), 
                                         Parameter('logtitude', IN_QUERY, type=TYPE_NUMBER, description='실수 형식으로 표현된 경도\nex) 127.075750')],
-                     responses={200: 'true: 위치 인증 성공\nfalse: 위치 인증 실패', 400: '위도 경도 데이터 유무 및 형식(실수)확인'},
+                     responses={200: '위치 인증 성공\n"message": "complete"', 400: '위치 인증 실패\n"message": "fail"\n\n위도 경도 데이터 유무 및 형식(실수)확인'},
                      operation_description='현재 위치의 위도와 경도를 기준으로 위치 인증')
 @api_view(['POST'])
 def authenticate_location(request, id):
