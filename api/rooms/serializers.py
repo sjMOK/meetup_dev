@@ -70,11 +70,9 @@ class BookerSerialzier(serializers.ModelSerializer):
 
 
 class CompanionSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-
     class Meta:
         model = User
-        fields = ["id"]
+        fields = "__all__"
 
 
 class ReservationSerializer(serializers.ModelSerializer):
@@ -89,6 +87,7 @@ class MyReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     booker = BookerSerialzier(read_only=True)
     room = RoomSerializer(read_only=True)
+    companion = CompanionSerializer(many=True)
 
     class Meta:
         model = Reservation
