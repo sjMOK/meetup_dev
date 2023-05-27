@@ -24,6 +24,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 import logging
 from haversine import haversine
+from drf_yasg.utils import swagger_auto_schema
 
 from users.permissions import (
     IsAdminOrReadOnly,
@@ -54,26 +55,30 @@ def check_schedule_conflict(start, end):
     return  # 겹치는 일정이 없는 경우
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def authenticate_location(request, id):
-    latitude, logtitude = request.query_params.get('latitude', None), request.query_params.get('logtitude', None)
+    latitude, logtitude = request.query_params.get(
+        "latitude", None
+    ), request.query_params.get("logtitude", None)
     if latitude is None or logtitude is None:
-        return Response('pass latitude and logtitude', HTTP_400_BAD_REQUEST)
+        return Response("pass latitude and logtitude", HTTP_400_BAD_REQUEST)
 
     try:
         latitude, logtitude = float(latitude), float(logtitude)
     except ValueError:
-        return Response('latitude and logtitude must be a float format.', HTTP_400_BAD_REQUEST)
+        return Response(
+            "latitude and logtitude must be a float format.", HTTP_400_BAD_REQUEST
+        )
 
     current_point = (latitude, logtitude)
-    distance = haversine(AI_CENTER_POINT, current_point, unit='m')
+    distance = haversine(AI_CENTER_POINT, current_point, unit="m")
 
     if distance < ALLOWED_DISTANCE:
-        # 위치 인증 성공
-        pass
+        reservation = Reservation.objects.filter(id=id)
+        reservation.update(is_attended=True)
+        return Response({"message": "complete"}, status=HTTP_202_ACCEPTED)
     else:
-        # 위치 인증 실패
-        pass
+        return Response({"message": "fail"}, status=HTTP_400_BAD_REQUEST)
 
     return Response(distance < ALLOWED_DISTANCE)
 
@@ -107,7 +112,7 @@ class RoomView(viewsets.ModelViewSet):
 
 
 class ReservationView(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend]

@@ -14,7 +14,6 @@ urlpatterns = [
             {
                 "get": "retrieve",
                 "put": "update",
-                "patch": "partial_update",
                 "delete": "destroy",
             }
         ),
@@ -23,34 +22,29 @@ urlpatterns = [
         "/reservations",
         ReservationView.as_view({"get": "list", "post": "create"}),
     ),
-    path(
-        "/reservations/<int:pk>",
-        ReservationView.as_view(
-            {
-                "get": "retrieve",
-                "put": "update",
-                "patch": "partial_update",
-                "delete": "destroy",
-            }
-        ),
-    ),
+    # path(
+    #     "/reservations/<int:pk>",
+    #     ReservationView.as_view(
+    #         {
+    #             "get": "retrieve",
+    #             "put": "update",
+    #             "patch": "partial_update",
+    #             "delete": "destroy",
+    #         }
+    #     ),
+    # ),
     path(
         "/my-reservations",
-        MyReservationView.as_view({"get": "list", "post": "create"}),
+        MyReservationView.as_view({"get": "list"}),
     ),
     path(
         "/my-reservations/<int:pk>",
-        ReservationView.as_view(
+        MyReservationView.as_view(
             {
                 "get": "retrieve",
-                "put": "update",
-                "patch": "partial_update",
                 "delete": "destroy",
             }
         ),
     ),
-    path(
-        "/reservations/<int:id>/location",
-        authenticate_location
-    ),
+    path("/reservations/<int:id>/location", authenticate_location),
 ]
