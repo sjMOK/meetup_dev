@@ -69,6 +69,14 @@ class BookerSerialzier(serializers.ModelSerializer):
         fields = ["name", "email", "user_type", "department"]
 
 
+class CompanionSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+
+    class Meta:
+        model = User
+        fields = ["id"]
+
+
 class ReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
 

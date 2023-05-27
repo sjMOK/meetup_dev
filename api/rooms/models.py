@@ -30,8 +30,7 @@ class Reservation(models.Model):
     end = models.TimeField(default=datetime.time)
     reason = models.CharField(max_length=63, null=True, blank=True)
     status = models.IntegerField(choices=STATUS_CHOICE, default=0)
+    is_attended = models.BooleanField(default=False)
     booker = models.ForeignKey(User, related_name="booker", on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    companion = models.ForeignKey(
-        User, related_name="companion", on_delete=models.CASCADE
-    )
+    companion = models.ManyToManyField(User, related_name="companion")
