@@ -203,13 +203,13 @@ class UserViewSet(ModelViewSet):
     @swagger_auto_schema(request_body=UserSerializer, responses={201: UserSerializer, 400: '데이터 형식 확인'}, operation_description=user_create_operation_description)
     def create(self, request, *args, **kwargs):
         data = request.data
-        data['password'] = get_random_string(length=8)
+        # data['password'] = get_random_string(length=8)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        self.__send_initial_password_email(data['password'], data['email'])
+        # self.__send_initial_password_email(data['password'], data['email'])
 
         return Response(serializer.data, status=HTTP_201_CREATED)
 
