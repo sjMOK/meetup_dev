@@ -19,9 +19,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
+from django.utils import timezone
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg.openapi import Parameter, IN_QUERY, TYPE_STRING, TYPE_INTEGER, TYPE_NUMBER
 import logging
@@ -61,7 +62,8 @@ def check_schedule_conflict(start, end):
 @swagger_auto_schema(method='POST',
                      manual_parameters=[Parameter('latitude', IN_QUERY, type=TYPE_NUMBER, description='실수 형식으로 표현된 위도\nex)37.551100'), 
                                         Parameter('logtitude', IN_QUERY, type=TYPE_NUMBER, description='실수 형식으로 표현된 경도\nex) 127.075750')],
-                     responses={200: '위치 인증 성공\n"message": "complete"', 400: '위치 인증 실패\n"message": "fail"\n\n위도 경도 데이터 유무 및 형식(실수)확인'},
+                     responses={200: '위치 인증 성공\n"message": "complete"',
+                                400: '가능한 시간대 확인(시작 시간 +- 10분)\n"message": "time_error"\n\n위치 인증 실패\n"message": "fail"\n\n위도 경도 데이터 유무 및 형식(실수)확인'},
                      operation_description='현재 위치의 위도와 경도를 기준으로 위치 인증')
 @api_view(['POST'])
 def authenticate_location(request, id):
@@ -77,13 +79,19 @@ def authenticate_location(request, id):
         return Response(
             "latitude and logtitude must be a float format.", HTTP_400_BAD_REQUEST
         )
+    
+    reservation = Reservation.objects.get(id=id)
+    start_datetime = datetime.combine(reservation.date, reservation.start)
+    criteria = timedelta(seconds=600)
+    if not (start_datetime - criteria < timezone.now() < start_datetime + criteria):
+        return Response({"message": "time_error"})
 
     current_point = (latitude, logtitude)
     distance = haversine(AI_CENTER_POINT, current_point, unit="m")
 
     if distance < ALLOWED_DISTANCE:
-        reservation = Reservation.objects.filter(id=id)
-        reservation.update(is_attended=True)
+        reservation.is_attended = True
+        reservation.save()
         return Response({"message": "complete"}, status=HTTP_202_ACCEPTED)
     else:
         return Response({"message": "fail"}, status=HTTP_400_BAD_REQUEST)
