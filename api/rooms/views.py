@@ -1,4 +1,5 @@
 import json
+import pytz
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.status import (
@@ -9,7 +10,10 @@ from rest_framework.status import (
 )
 from rest_framework.decorators import api_view
 from django.core.exceptions import BadRequest
-from .models import Reservation, Room, RoomImages
+from users.models import User
+
+from common.calendars import create_calendar_event, delete_calendar_event
+from .models import GoogleCalenderLog, Reservation, Room, RoomImages
 from .serializers import (
     MyReservationSerializer,
     ReservationSerializer,
@@ -47,16 +51,16 @@ logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 
-def check_schedule_conflict(start, end):
+def check_schedule_conflict(date, start, end):
     conflicting_schedules = Reservation.objects.filter(
+        date=date,
         start__lt=end,  # 등록하려는 일정의 종료일 이후에 시작하는 일정
         end__gt=start,  # 등록하려는 일정의 시작일 이전에 종료하는 일정
-    )
-    logger.warning(conflicting_schedules.id)
+    ).all()
+    logger.warning(conflicting_schedules)
     if conflicting_schedules:
         raise BadRequest  # 겹치는 일정이 존재하는 경우
-
-    return  # 겹치는 일정이 없는 경우
+    return True  # 겹치는 일정이 없는 경우
 
 
 @swagger_auto_schema(method='POST',
@@ -128,31 +132,80 @@ class RoomView(viewsets.ModelViewSet):
 
 
 class ReservationView(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["date", "room"]
 
     def create(self, request):
-        # if not check_schedule_conflict(
-        #     request.data.get("start"), request.data.get("end")
-        # ):
-        #     raise BadRequest
+        if not check_schedule_conflict(
+            request.data.get("date"), request.data.get("start"), request.data.get("end")
+        ):
+            raise BadRequest
         serializer = ReservationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             try:
                 serializer.save()
-                return Response({"message": "complete"})
             except Exception as e:
                 return Response({"message": e})
+        try:
+            date = datetime.strptime(serializer.data["date"], "%Y-%m-%d").date()
+            start = datetime.strptime(serializer.data["start"], "%H:%M:%S").time()
+            end = datetime.strptime(serializer.data["start"], "%H:%M:%S").time()
+
+            timezone = pytz.timezone("Asia/Seoul")
+            for com in serializer.data["companion"]:
+                companion = User.objects.filter(id=com).get()
+                room = Room.objects.filter(id=serializer.data["room"]).get()
+
+                start_datetime = timezone.localize(
+                    datetime.combine(date, start)
+                ).isoformat()
+                end_datetime = timezone.localize(
+                    datetime.combine(date, end)
+                ).isoformat()
+                event_result = create_calendar_event(
+                    user=companion,
+                    summary=serializer.data["reason"],
+                    start_datetime=start_datetime,
+                    end_datetime=end_datetime,
+                    location=room.name,
+                ).json()
+                logger.warning(event_result["id"])
+                reservation = Reservation.objects.filter(id=serializer.data["id"]).get()
+                try:
+                    log = GoogleCalenderLog.objects.create(
+                        owner=companion,
+                        event_id=event_result["id"],
+                        reservation=reservation,
+                    )
+                    return Response({"message": "complete"})
+                except Exception as e:
+                    return Response({"error": e})
+
+        except Exception as e:
+            return Response({"message": e})
         return Response({"message": "invalid form"})
 
 
 class MyReservationView(viewsets.ModelViewSet):
-    # permission_classes = [IsOwnerOrAdmin]
+    permission_classes = [IsOwnerOrAdmin]
     serializer_class = MyReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ["date", "booker", "is_scheduled"]
     search_fields = ["day"]
+
+    def destroy(self, request, pk, *args, **kwargs):
+        reservation = Reservation.objects.filter(id=pk).get()
+        google_calender_log = GoogleCalenderLog.objects.filter(reservation__id=pk).all()
+
+        for log in google_calender_log:
+            try:
+                event_result = delete_calendar_event(log.owner, log.event_id).json()
+                logger.warning(event_result)
+            except Exception as e:
+                logger.warning(e)
+
+        return super().destroy(request, *args, **kwargs)

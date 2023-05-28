@@ -32,5 +32,17 @@ class Reservation(models.Model):
     status = models.IntegerField(choices=STATUS_CHOICE, default=0)
     is_attended = models.BooleanField(default=False)
     booker = models.ForeignKey(User, related_name="booker", on_delete=models.CASCADE)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    room = models.ForeignKey(
+        Room, related_name="room", on_delete=models.SET_NULL, null=True
+    )
     companion = models.ManyToManyField(User, related_name="companion")
+    companion.on_delete = models.CASCADE
+
+
+class GoogleCalenderLog(models.Model):
+    id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(User, related_name="owner", on_delete=models.CASCADE)
+    event_id = models.CharField(max_length=64, null=False)
+    reservation = models.ForeignKey(
+        Reservation, related_name="reservation", on_delete=models.CASCADE
+    )
