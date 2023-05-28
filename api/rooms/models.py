@@ -12,7 +12,7 @@ class RoomImages(models.Model):
 class Room(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(blank=False, max_length=100, null=False)
-    discription = models.TextField()
+    discription = models.JSONField(default=dict)
     amenities = models.TextField()
     images = models.ForeignKey(RoomImages, on_delete=models.CASCADE, null=True)
 
