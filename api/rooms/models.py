@@ -25,7 +25,7 @@ class Reservation(models.Model):
     id = models.AutoField(primary_key=True)
     is_scheduled = models.BooleanField(default=False)
     day = models.JSONField(default=dict)
-    date = models.DateField(default=datetime.date.today)
+    date = models.DateField(default=datetime.date.today, null=True, blank=True)
     start = models.TimeField(default=datetime.time)
     end = models.TimeField(default=datetime.time)
     reason = models.CharField(max_length=63, null=True, blank=True)
@@ -35,8 +35,7 @@ class Reservation(models.Model):
     room = models.ForeignKey(
         Room, related_name="room", on_delete=models.SET_NULL, null=True
     )
-    companion = models.ManyToManyField(User, related_name="companion")
-    companion.on_delete = models.CASCADE
+    companion = models.ManyToManyField(User, related_name="companion", blank=True)
 
 
 class GoogleCalenderLog(models.Model):
