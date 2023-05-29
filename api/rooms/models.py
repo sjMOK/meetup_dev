@@ -25,6 +25,7 @@ class Reservation(models.Model):
     id = models.AutoField(primary_key=True)
     is_scheduled = models.BooleanField(default=False)
     day = models.JSONField(default=dict)
+    schedule_daedline = models.DateField(null=True, blank=True)
     date = models.DateField(default=datetime.date.today, null=True, blank=True)
     start = models.TimeField(default=datetime.time)
     end = models.TimeField(default=datetime.time)
