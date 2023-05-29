@@ -10,6 +10,7 @@ from rest_framework.status import (
 )
 from rest_framework.decorators import api_view
 from django.core.exceptions import BadRequest
+from rest_framework.exceptions import APIException
 from users.models import User
 
 from common.calendars import create_calendar_event, delete_calendar_event
@@ -198,6 +199,8 @@ class ReservationView(viewsets.ModelViewSet):
                 )
             except Exception as e:
                 logger.warning({"message": e})
+        except APIException:
+            pass
         except Exception as e:
             return Response({"message": e})
 
@@ -225,6 +228,8 @@ class ReservationView(viewsets.ModelViewSet):
                 except Exception as e:
                     return Response({"error": e})
             return Response({"message": "complete"})
+        except APIException:
+            pass
         except Exception as e:
             return Response({"message": e})
 
