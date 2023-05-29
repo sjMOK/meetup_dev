@@ -120,7 +120,7 @@ def authenticate_location(request, id):
 
 
 class RoomView(viewsets.ModelViewSet):
-    # permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
     lookup_field = "id"
@@ -148,7 +148,7 @@ class RoomView(viewsets.ModelViewSet):
 
 
 class ReservationView(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend]
@@ -165,22 +165,48 @@ class ReservationView(viewsets.ModelViewSet):
                 serializer.save()
             except Exception as e:
                 return Response({"message": e})
-        try:
+
+            timezone = pytz.timezone("Asia/Seoul")
             date = datetime.strptime(serializer.data["date"], "%Y-%m-%d").date()
             start = datetime.strptime(serializer.data["start"], "%H:%M:%S").time()
             end = datetime.strptime(serializer.data["start"], "%H:%M:%S").time()
+            start_datetime = timezone.localize(
+                datetime.combine(date, start)
+            ).isoformat()
+            end_datetime = timezone.localize(datetime.combine(date, end)).isoformat()
 
-            timezone = pytz.timezone("Asia/Seoul")
+            room = Room.objects.filter(id=serializer.data["room"]).get()
+        try:
+            # 예약자 구글 캘린더 등록
+            booker = User.objects.filter(id=serializer.data["booker"]).get()
+            logger.warning(booker)
+            event_result = create_calendar_event(
+                user=booker,
+                summary=serializer.data["reason"],
+                start_datetime=start_datetime,
+                end_datetime=end_datetime,
+                location=room.name,
+            ).json()
+
+            reservation = Reservation.objects.filter(id=serializer.data["id"]).get()
+            try:
+                log = GoogleCalenderLog.objects.create(
+                    owner=booker,
+                    event_id=event_result["id"],
+                    reservation=reservation,
+                )
+            except Exception as e:
+                logger.warning({"message": e})
+        except Exception as e:
+            return Response({"message": e})
+
+        try:  # 동반 참석자들 구글 캘린더 등록
+            if not hasattr(serializer.data, "companion"):
+                return Response({"message": "complete"})
             for com in serializer.data["companion"]:
+                logger.warning(com)
                 companion = User.objects.filter(id=com).get()
-                room = Room.objects.filter(id=serializer.data["room"]).get()
 
-                start_datetime = timezone.localize(
-                    datetime.combine(date, start)
-                ).isoformat()
-                end_datetime = timezone.localize(
-                    datetime.combine(date, end)
-                ).isoformat()
                 event_result = create_calendar_event(
                     user=companion,
                     summary=serializer.data["reason"],
@@ -189,24 +215,21 @@ class ReservationView(viewsets.ModelViewSet):
                     location=room.name,
                 ).json()
                 logger.warning(event_result["id"])
-                reservation = Reservation.objects.filter(id=serializer.data["id"]).get()
                 try:
                     log = GoogleCalenderLog.objects.create(
                         owner=companion,
                         event_id=event_result["id"],
                         reservation=reservation,
                     )
-                    return Response({"message": "complete"})
                 except Exception as e:
                     return Response({"error": e})
-
+            return Response({"message": "complete"})
         except Exception as e:
             return Response({"message": e})
-        return Response({"message": "invalid form"})
 
 
 class MyReservationView(viewsets.ModelViewSet):
-    # permission_classes = [IsOwnerOrAdmin]
+    permission_classes = [IsOwnerOrAdmin]
     serializer_class = MyReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter]
