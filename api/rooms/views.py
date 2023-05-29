@@ -22,6 +22,7 @@ from .serializers import (
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from rest_framework.filters import SearchFilter
+import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from datetime import datetime, timedelta
 from django.views.decorators.csrf import csrf_exempt
@@ -152,7 +153,7 @@ class ReservationView(viewsets.ModelViewSet):
     serializer_class = ReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["date", "room"]
+    filterset_fields = ["date", "room", "schedule_daedline"]
 
     def create(self, request):
         if not check_schedule_conflict(
@@ -228,12 +229,22 @@ class ReservationView(viewsets.ModelViewSet):
             return Response({"message": e})
 
 
+class MyReservationFilter(django_filters.FilterSet):
+    schedule_daedline = django_filters.DateFilter(
+        field_name="schedule_daedline", lookup_expr="gt"
+    )
+
+    class Meta:
+        model = Reservation
+        fields = ["schedule_daedline", "date", "booker", "is_scheduled"]
+
+
 class MyReservationView(viewsets.ModelViewSet):
     permission_classes = [IsOwnerOrAdmin]
     serializer_class = MyReservationSerializer
     queryset = Reservation.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ["date", "booker", "is_scheduled"]
+    filterset_class = MyReservationFilter
     search_fields = ["day"]
 
     def destroy(self, request, pk, *args, **kwargs):
