@@ -56,4 +56,4 @@ class IsOwnerOrAdmin(IsAuthenticated):
         # so we'll always allow GET, HEAD or OPTIONS requests.
 
         # Instance must have an attribute named `owner`.
-        return obj.auth_id == request.user or request.user.is_admin()
+        return obj.booker_id == request.user or request.user.is_admin()
