@@ -32,6 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         ret['user_type'] = UserTypeSerializer(instance.user_type).data
+        ret['department'] = UserDepartmentSerializer(instance.department).data
 
         return ret
 

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .serializers import UserTypeSerializer
+from .serializers import UserTypeSerializer, UserDepartmentSerializer
 
 
 not_found_response = '"detail": "Not found."'
@@ -74,6 +74,7 @@ class UserResponse(serializers.Serializer):
     name = serializers.CharField()
     email = serializers.CharField()
     user_type = UserTypeSerializer()
+    deparment = UserDepartmentSerializer()
 
 
 class UserListResponse(serializers.Serializer):
