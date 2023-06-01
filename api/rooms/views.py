@@ -85,7 +85,7 @@ def check_schedule_conflict(date, start, end):
     ],
     responses={
         200: '위치 인증 성공\n"message": "complete"',
-        400: '가능한 시간대 확인(시작 시간 +- 10분)\n"message": "time_error"\n\n위치 인증 실패\n"message": "fail"\n\n위도 경도 데이터 유무 및 형식(실수)확인',
+        400: '가능한 시간대 확인(시작 시간 +- 10분)\n"message": "not available time"\n\n위치 인증 실패\n"message": "fail"\n\n위도 경도 데이터 유무 및 형식(실수)확인',
     },
     operation_description="현재 위치의 위도와 경도를 기준으로 위치 인증",
 )
@@ -108,7 +108,7 @@ def authenticate_location(request, id):
     start_datetime = datetime.combine(reservation.date, reservation.start)
     criteria = timedelta(seconds=600)
     if not (start_datetime - criteria < timezone.now() < start_datetime + criteria):
-        return Response({"message": "time_error"})
+        return Response({"message": "not available time"}, status=HTTP_400_BAD_REQUEST)
 
     current_point = (latitude, logtitude)
     distance = haversine(AI_CENTER_POINT, current_point, unit="m")
