@@ -29,6 +29,8 @@ from datetime import datetime, timedelta
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.utils import timezone
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg.openapi import Parameter, IN_QUERY, TYPE_STRING, TYPE_INTEGER, TYPE_NUMBER
 import logging
@@ -156,6 +158,22 @@ class ReservationView(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["date", "room", "schedule_daedline"]
 
+    def __send_email(self, room_name, user_name, date, start, end, to_email):
+        context = {
+            'room_name': room_name,
+            'user_name': user_name,
+            'date': date,
+            'start': start,
+            'end': end,
+        }
+        send_mail(
+            '회의 일정을 안내해드립니다.',
+            '',
+            from_email=None,
+            recipient_list=[to_email],
+            html_message=render_to_string('mailing/reservation.html', context=context)
+        )
+
     def create(self, request):
         if not check_schedule_conflict(
             request.data.get("date"), request.data.get("start"), request.data.get("end")
@@ -171,7 +189,7 @@ class ReservationView(viewsets.ModelViewSet):
             timezone = pytz.timezone("Asia/Seoul")
             date = datetime.strptime(serializer.data["date"], "%Y-%m-%d").date()
             start = datetime.strptime(serializer.data["start"], "%H:%M:%S").time()
-            end = datetime.strptime(serializer.data["start"], "%H:%M:%S").time()
+            end = datetime.strptime(serializer.data["end"], "%H:%M:%S").time()
             start_datetime = timezone.localize(
                 datetime.combine(date, start)
             ).isoformat()
