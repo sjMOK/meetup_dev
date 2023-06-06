@@ -28,7 +28,7 @@ from users.views import UserViewSet
 
 
 router = SimpleRouter(trailing_slash=False)
-router.register(r"users", UserViewSet, basename="user")
+router.register(r"api/users", UserViewSet, basename="user")
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -49,10 +49,10 @@ urlpatterns = [
         schema_view.with_ui("swagger", cache_timeout=0),
         name="schema-swagger-ui",
     ),
-    path("admin/", admin.site.urls),
-    path("users", include("users.urls")),
-    path("rooms", include("rooms.urls")),
-    path("utils", include("utils.urls")),
+    path("api/admin/", admin.site.urls),
+    path("api/users", include("users.urls")),
+    path("api/rooms", include("rooms.urls")),
+    path("api/utils", include("utils.urls")),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
