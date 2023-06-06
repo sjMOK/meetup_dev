@@ -82,3 +82,16 @@ class UserListResponse(serializers.Serializer):
     next = serializers.URLField(allow_null=True)
     previous = serializers.URLField(allow_null=True)
     results = UserResponse(many=True)
+
+
+class UserNoshowResponse(serializers.Serializer):
+    user_no = serializers.CharField()
+    name = serializers.CharField()
+    email = serializers.CharField()
+    user_type_name = serializers.CharField()
+    noshow = serializers.IntegerField()
+
+
+class UserTypeNoshowResponse(serializers.Serializer):
+    user_type_name = serializers.CharField()
+    noshow = serializers.IntegerField()
