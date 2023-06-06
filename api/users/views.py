@@ -177,7 +177,7 @@ def get_noshow_user_list(request):
     now = datetime.now().isoformat()
     results = User.objects.annotate(
         dt=Concat(F('booker__date'), Value('T'), F('booker__start'), output_field=CharField()), is_attended=F('booker__is_attended')
-    ).filter(dt__lte=now, is_attended=False).annotate(noshow=Count('id'), user_type_name=F('user_type__name')).values('user_no', 'name', 'email', 'user_type_name', 'noshow')
+    ).filter(dt__lte=now, is_attended=False).annotate(noshow=Count('id'), user_type_name=F('user_type__name')).values('user_no', 'name', 'email', 'user_type_name', 'noshow').order_by('-noshow')
 
     return Response(results)
 
