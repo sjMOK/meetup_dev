@@ -2,7 +2,7 @@ from django.urls import path
 
 from rest_framework.authtoken.views import obtain_auth_token
 
-from .views import get_all_user_type, get_all_user_departments, change_password, google_login, google_callback, google_revoke, UserCsvCreateView
+from .views import get_all_user_type, get_all_user_departments, change_password, google_login, google_callback, google_revoke, get_noshow_user_list, get_user_type_noshow_count, UserCsvCreateView
 
 
 urlpatterns = [
@@ -14,4 +14,6 @@ urlpatterns = [
     path('/google-login', google_login),
     path('/google-callback', google_callback),
     path('/google-revoke', google_revoke),
+    path('/noshow', get_noshow_user_list),
+    path('/types/noshow', get_user_type_noshow_count),
 ]

@@ -1,6 +1,7 @@
 import csv
 import requests
 import json
+from datetime import datetime
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -9,7 +10,10 @@ from django.contrib.auth import login, authenticate, logout, update_session_auth
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-
+from django.db.models import CharField, Value, Count
+from django.db.models.expressions import F
+from django.db.models.functions import Concat
+from django.db import connection, reset_queries
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
@@ -23,14 +27,15 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 
 from common.parsers import PlainTextParser
+from rooms.models import Reservation
 from .models import User, UserType, UserDepartment, GoogleAccount
-from .serializers import LoginSerializer, UserSerializer, UserTypeSerializer, UserDepartmentSerializer, PasswordChangeSerializer
-from .permissions import IsNonAdminUser, UserAccessPermission
+from .serializers import LoginSerializer, UserSerializer, UserNoshowSerializer, UserTypeSerializer, UserDepartmentSerializer, PasswordChangeSerializer
+from .permissions import IsNonAdminUser, UserAccessPermission, IsAdminUser
 from .documentations import (
     logout_view_operation_description, login_view_operation_description, user_create_operation_description,
     user_partial_update_operation_description, change_password_operation_description, not_found_response,
     user_bulk_delete_operation_description, user_bulk_create_operation_description,
-    UserResponse, UserListResponse
+    UserResponse, UserListResponse, UserNoshowResponse
 )
 
 
@@ -162,6 +167,31 @@ def google_revoke(request):
         return Response()
     else:
         return Response(response.json(), HTTP_400_BAD_REQUEST)
+    
+
+@swagger_auto_schema(method='GET', responses={200: UserNoshowResponse(many=True)}, operation_description='유저 노쇼 횟수 조회\n관리자만 요청 가능')
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_noshow_user_list(request):
+    reset_queries()
+    now = datetime.now().isoformat()
+    results = User.objects.annotate(
+        dt=Concat(F('booker__date'), Value('T'), F('booker__start'), output_field=CharField()), is_attended=F('booker__is_attended')
+    ).filter(dt__lte=now, is_attended=False).annotate(noshow=Count('id'), user_type_name=F('user_type__name')).values('user_no', 'name', 'email', 'user_type_name', 'noshow').order_by('-noshow')
+
+    return Response(results)
+
+
+@swagger_auto_schema(method='GET', responses={200: UserDepartmentSerializer(many=True)}, operation_description='유저 타입별 노쇼 횟수 조회\n관리자만 요청 가능')
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_user_type_noshow_count(request):
+    now = datetime.now().isoformat()
+    results = User.objects.annotate(
+        dt=Concat(F('booker__date'), Value('T'), F('booker__start'), output_field=CharField()), is_attended=F('booker__is_attended')
+    ).filter(dt__lte=now, is_attended=False).annotate(user_type_name=F('user_type__name')).values('user_type_name').annotate(noshow=Count('user_type_name')).order_by('-noshow')
+
+    return Response(results)
 
 
 class UserViewSet(ModelViewSet):
@@ -203,13 +233,13 @@ class UserViewSet(ModelViewSet):
     @swagger_auto_schema(request_body=UserSerializer, responses={201: UserSerializer, 400: '데이터 형식 확인'}, operation_description=user_create_operation_description)
     def create(self, request, *args, **kwargs):
         data = request.data
-        # data['password'] = get_random_string(length=8)
+        data['password'] = get_random_string(length=8)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        # self.__send_initial_password_email(data['password'], data['email'])
+        self.__send_initial_password_email(data['password'], data['email'])
 
         return Response(serializer.data, status=HTTP_201_CREATED)
 

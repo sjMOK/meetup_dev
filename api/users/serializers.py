@@ -41,6 +41,21 @@ class UserSerializer(serializers.ModelSerializer):
             raise APIException('Cannot update password with UserSerializer instance.')
 
         return value
+    
+
+class UserNoshowSerializer(serializers.ModelSerializer):
+    noshow = serializers.IntegerField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'user_no', 'name', 'user_type', 'noshow']
+
+    # def to_representation(self, instance):
+    #     ret = super().to_representation(instance)
+    #     ret['user_type'] = UserTypeSerializer(instance.user_type).data
+
+    #     return ret
+    
 
 
 class LoginSerializer(serializers.Serializer):
