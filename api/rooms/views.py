@@ -160,18 +160,18 @@ class ReservationView(viewsets.ModelViewSet):
 
     def __send_email(self, room_name, user_name, date, start, end, to_email):
         context = {
-            'room_name': room_name,
-            'user_name': user_name,
-            'date': date,
-            'start': start,
-            'end': end,
+            "room_name": room_name,
+            "user_name": user_name,
+            "date": date,
+            "start": start,
+            "end": end,
         }
         send_mail(
-            '회의 일정을 안내해드립니다.',
-            '',
+            "회의 일정을 안내해드립니다.",
+            "",
             from_email=None,
             recipient_list=[to_email],
-            html_message=render_to_string('mailing/reservation.html', context=context)
+            html_message=render_to_string("mailing/reservation.html", context=context),
         )
 
     def create(self, request):
@@ -196,6 +196,7 @@ class ReservationView(viewsets.ModelViewSet):
             end_datetime = timezone.localize(datetime.combine(date, end)).isoformat()
 
             room = Room.objects.filter(id=serializer.data["room"]).get()
+            reservation = Reservation.objects.filter(id=serializer.data["id"]).get()
         try:
             # 예약자 구글 캘린더 등록
             booker = User.objects.filter(id=serializer.data["booker"]).get()
@@ -208,7 +209,6 @@ class ReservationView(viewsets.ModelViewSet):
                 location=room.name,
             ).json()
 
-            reservation = Reservation.objects.filter(id=serializer.data["id"]).get()
             try:
                 log = GoogleCalenderLog.objects.create(
                     owner=booker,
@@ -223,8 +223,6 @@ class ReservationView(viewsets.ModelViewSet):
             return Response({"message": e})
 
         try:  # 동반 참석자들 구글 캘린더 등록
-            if not hasattr(serializer.data, "companion"):
-                return Response({"message": "complete"})
             for com in serializer.data["companion"]:
                 logger.warning(com)
                 companion = User.objects.filter(id=com).get()
