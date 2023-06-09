@@ -240,7 +240,7 @@ class UserViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        # self.__send_initial_password_email(data['password'], data['email'])
+        self.__send_initial_password_email(data['password'], data['email'])
 
         return Response(serializer.data, status=HTTP_201_CREATED)
 
